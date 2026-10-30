@@ -52,4 +52,5 @@ jobs:
           gh release create "$GITHUB_REF_NAME" --generate-notes \
             "eks-devops-operator-${{ steps.v.outputs.version }}.tgz" \
             deploy/helm/eks-devops-operator/crds/identity.platform.io_podidentityaccesses.yaml \
-            deploy/helm/eks-devops-operator/crds/identity.platform.io_irsaaccesses.yaml
+            deploy/helm/eks-devops-operator/crds/identity.platform.io_irsaaccesses.yaml \
+            deploy/helm/eks-devops-operator/crds/identity.platform.io_podidentitypolicies.yaml
