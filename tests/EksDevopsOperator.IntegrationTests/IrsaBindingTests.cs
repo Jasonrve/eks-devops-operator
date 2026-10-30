@@ -114,8 +114,8 @@ public sealed class OidcResolverTests : IDisposable
 
     public OidcResolverTests()
     {
-        Environment.SetEnvironmentVariable("AWS_ACCESS_KEY_ID", "AKIAFAKEFAKEFAKE0000");
-        Environment.SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY", "fake");
+        Environment.SetEnvironmentVariable("AWS_ACCESS_KEY_ID", EngineHarness.A);
+        Environment.SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY", "test");
         var l = new TcpListener(IPAddress.Loopback, 0); l.Start(); var port = ((IPEndPoint)l.LocalEndpoint).Port; l.Stop();
         _listener.Prefixes.Add($"http://localhost:{port}/");
         _listener.Start();

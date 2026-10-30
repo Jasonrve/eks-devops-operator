@@ -115,7 +115,7 @@ jobs:
           docker logs smoke 2>&1 | tail -n 20
           [ "$(docker inspect smoke --format '{{.State.Running}}')" = true ]
       - name: Scan image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: eks-devops-operator:ci
           severity: CRITICAL,HIGH

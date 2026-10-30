@@ -51,7 +51,7 @@ public sealed class AwsClients : IAwsAccountResolver
     {
         if (_account is not null) return _account;
         _account = (await Telemetry.AwsCall("sts", "GetCallerIdentity", () => Sts.GetCallerIdentityAsync(new GetCallerIdentityRequest(), ct))).Account;
-        Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(_log!, "running in AWS account {Account} (region {Region})", _account, _region);
+        if (_log is not null) Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(_log, "running in AWS account {Account} (region {Region})", _account, _region);
         return _account;
     }
 }
