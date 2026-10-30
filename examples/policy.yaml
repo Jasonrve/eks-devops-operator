@@ -1,0 +1,13 @@
+# Create this in the OPERATOR's namespace (for example "pio"). Policies in other namespaces are ignored.
+apiVersion: identity.platform.io/v1alpha1
+kind: PodIdentityPolicy
+metadata:
+  name: payments
+  namespace: pio
+spec:
+  namespaces: [payments]
+  allowedServices: [s3]
+  allowedActions: [s3:GetObject, s3:ListBucket]
+  deniedActions: ["s3:Delete*"]
+  allowedResourceArnPatterns: ["arn:aws:s3:::payments-*"]
+  allowedDeletionPolicies: [Delete, Retain]

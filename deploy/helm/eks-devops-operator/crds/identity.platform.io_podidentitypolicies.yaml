@@ -1,0 +1,74 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podidentitypolicies.identity.platform.io
+spec:
+  group: identity.platform.io
+  names:
+    kind: PodIdentityPolicy
+    listKind: PodIdentityPolicyList
+    plural: podidentitypolicies
+    shortNames:
+    - pip
+    singular: podidentitypolicy
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              allowPrivilegeEscalationActions:
+                type: boolean
+              allowWildcardActions:
+                type: boolean
+              allowWildcardResources:
+                type: boolean
+              allowedActions:
+                description: Action globs teams may use, e.g. s3:Get*, s3:ListBucket. "*" (the default) allows every action; an empty list allows none.
+                items:
+                  type: string
+                type: array
+              allowedDeletionPolicies:
+                description: Delete and/or Retain.
+                items:
+                  type: string
+                type: array
+              allowedManagedPolicyArns:
+                description: Managed policy ARN globs teams may attach. Empty = none.
+                items:
+                  type: string
+                type: array
+              allowedMechanisms:
+                description: 'Kinds of access teams may request: PodIdentity (PodIdentityAccess), IRSA (IrsaAccess). "*" (the default) allows both; an empty list allows none. IRSA also needs irsa.enabled on the operator.'
+                items:
+                  type: string
+                type: array
+              allowedResourceArnPatterns:
+                description: Resource ARN globs every requested resource must match, e.g. arn:aws:s3:::payments-*. Empty = any ARN.
+                items:
+                  type: string
+                type: array
+              allowedServices:
+                description: IAM service prefixes, e.g. s3, sqs. "*" (the default) allows every service; an empty list allows none.
+                items:
+                  type: string
+                type: array
+              deniedActions:
+                description: Action globs that are always refused.
+                items:
+                  type: string
+                type: array
+              namespaces:
+                description: Namespaces this policy governs. Empty = all namespaces. A request must satisfy every policy that governs its namespace, and is denied if none does.
+                items:
+                  type: string
+                type: array
+              requirePermissionsBoundary:
+                default: true
+                type: boolean
+            type: object
+        type: object
+    served: true
+    storage: true

@@ -1,0 +1,155 @@
+{{- if not .Values.cluster.name }}{{ fail "cluster.name is required" }}{{ end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [identity.platform.io]
+    resources: [podidentityaccesses, irsaaccesses]
+    verbs: [get, list, watch, update, patch]
+  - apiGroups: [identity.platform.io]
+    resources: [podidentityaccesses/status, irsaaccesses/status]
+    verbs: [get, update, patch]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create, patch, update, get, list]
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  {{- if .Values.serviceAccountAnnotations.enabled }}
+  # annotations: find annotated ServiceAccounts, create and remove the access resources generated from them, mirror status onto the ServiceAccount
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    verbs: [get, list, patch]
+  - apiGroups: [identity.platform.io]
+    resources: [podidentityaccesses, irsaaccesses]
+    verbs: [create, delete]
+  {{- else if .Values.irsa.enabled }}
+  # IRSA only: read a ServiceAccount and set or remove its single eks.amazonaws.com/role-arn annotation
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    verbs: [get, patch]
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: {{ .Release.Name }}}
+subjects:
+  - {kind: ServiceAccount, name: {{ .Values.serviceAccount.name }}, namespace: {{ .Release.Namespace }}}
+---
+# PodIdentityPolicy objects are read only from this namespace (the operator's own).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-policies
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [identity.platform.io]
+    resources: [podidentitypolicies]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-policies
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: {{ .Release.Name }}-policies}
+subjects:
+  - {kind: ServiceAccount, name: {{ .Values.serviceAccount.name }}, namespace: {{ .Release.Namespace }}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+spec:
+  selector: {{ include "pio.selector" . | nindent 4 }}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{ include "pio.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{ include "pio.labels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}{{ toYaml . | nindent 8 }}{{- end }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      terminationGracePeriodSeconds: 40
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: operator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports: [{containerPort: 8080, name: http}]
+          startupProbe: {httpGet: {path: /health/live, port: http}, periodSeconds: 2, failureThreshold: 30}   # up to 60 s to start, even when CPU limited
+          readinessProbe: {httpGet: {path: /health/ready, port: http}, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /health/live, port: http}, periodSeconds: 20}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          env:
+            - {name: Operator__ClusterName, value: {{ .Values.cluster.name | quote }}}
+            - {name: Operator__Region, value: {{ .Values.cluster.region | quote }}}
+            - name: POD_NAMESPACE
+              valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+            - {name: Operator__DriftInterval, value: {{ .Values.driftInterval | quote }}}
+            - {name: Operator__MaxConcurrentReconciles, value: {{ .Values.maxConcurrentReconciles | quote }}}
+            - {name: Operator__PermissionsBoundary, value: {{ .Values.permissionsBoundary | quote }}}
+            - {name: Operator__IrsaEnabled, value: {{ .Values.irsa.enabled | quote }}}
+            - {name: Operator__ServiceAccountAnnotations, value: {{ .Values.serviceAccountAnnotations.enabled | quote }}}
+            - {name: Operator__ServiceAccountSyncInterval, value: {{ .Values.serviceAccountAnnotations.interval | quote }}}
+            {{- with .Values.irsa.oidcIssuer }}
+            - {name: Operator__OidcIssuer, value: {{ . | quote }}}
+            {{- end }}
+            - {name: Operator__Partition, value: {{ .Values.cluster.partition | quote }}}
+            - {name: Operator__Environment, value: {{ .Values.environment | quote }}}
+            - {name: Logging__LogLevel__Default, value: {{ .Values.logLevel | quote }}}
+            - {name: Logging__LogLevel__KubeOps, value: {{ .Values.libraryLogLevel | quote }}}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            - {name: config, mountPath: /config, readOnly: true}
+      volumes:
+        - {name: tmp, emptyDir: {}}
+        - name: config
+          configMap: {name: {{ .Release.Name }}-config}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{ toYaml . | nindent 8 }}
+      {{- end }}

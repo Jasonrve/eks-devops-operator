@@ -1,0 +1,128 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podidentityaccesses.identity.platform.io
+spec:
+  group: identity.platform.io
+  names:
+    kind: PodIdentityAccess
+    listKind: PodIdentityAccessList
+    plural: podidentityaccesses
+    shortNames:
+    - pia
+    singular: podidentityaccess
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      priority: 0
+      type: string
+    - jsonPath: .spec.serviceAccountName
+      name: ServiceAccount
+      priority: 0
+      type: string
+    - jsonPath: .status.roleArn
+      name: Role
+      priority: 0
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              deletionPolicy:
+                default: Delete
+                description: Delete removes the role and binding when this resource is deleted. Retain removes only the binding.
+                enum:
+                - Delete
+                - Retain
+                type: string
+              managedPolicies:
+                description: IAM managed policy ARNs to attach (must be on the PodIdentityPolicy allow-list).
+                items:
+                  type: string
+                type: array
+              roleName:
+                description: Optional role name prefix; the operator appends a stable hash.
+                nullable: true
+                pattern: ^[a-z0-9][a-z0-9-]{0,39}$
+                type: string
+              serviceAccountName:
+                pattern: ^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$
+                type: string
+              statements:
+                items:
+                  properties:
+                    actions:
+                      items:
+                        type: string
+                      type: array
+                    resources:
+                      description: Resource ARNs. They may belong to any AWS account (that account must also allow this role).
+                      items:
+                        type: string
+                      type: array
+                    sid:
+                      nullable: true
+                      pattern: ^[A-Za-z0-9]{1,128}$
+                      type: string
+                  required:
+                  - actions
+                  - resources
+                  type: object
+                type: array
+              tags:
+                additionalProperties:
+                  type: string
+                description: 'Extra AWS tags for the role (and the Pod Identity association), added to the global tags the platform team configured. Max 10. Keys starting with pio: or aws: are reserved, and keys the global tags already set are rejected.'
+                type: object
+            required:
+            - serviceAccountName
+            type: object
+          status:
+            properties:
+              associationId:
+                description: Pod Identity association id, or namespace/name of the annotated ServiceAccount for IRSA.
+                nullable: true
+                type: string
+              conditions:
+                items:
+                  properties:
+                    message:
+                      type: string
+                    reason:
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              message:
+                nullable: true
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              phase:
+                description: Pending | Ready | Failed | Invalid | Conflict
+                type: string
+              roleArn:
+                nullable: true
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

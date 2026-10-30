@@ -1,0 +1,14 @@
+# Ask for access with annotations on the ServiceAccount. Needs serviceAccountAnnotations.enabled=true in the Helm chart.
+# The operator creates a PodIdentityAccess named sa-payments-api (or an IrsaAccess with mechanism: IRSA), and writes the
+# outcome back as identity.platform.io/status, role-arn and message annotations. See docs/guide/annotations.md.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-api
+  namespace: payments
+  annotations:
+    identity.platform.io/enabled: "true"
+    identity.platform.io/policy-template: s3-read
+    identity.platform.io/resource-arns: arn:aws:s3:::payments-invoices
+    # identity.platform.io/mechanism: IRSA          # PodIdentity (default) or IRSA
+    # identity.platform.io/tags: App=payments

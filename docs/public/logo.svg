@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="EKS DevOps Operator">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111B3B"/>
+      <stop offset="1" stop-color="#1E1550"/>
+    </linearGradient>
+    <linearGradient id="loop" gradientUnits="userSpaceOnUse" x1="40" y1="60" x2="216" y2="196">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#A78BFA"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFB020" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#FFB020" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- tile -->
+  <rect x="8" y="8" width="240" height="240" rx="58" fill="url(#tile)"/>
+  <rect x="8.75" y="8.75" width="238.5" height="238.5" rx="57.25" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5"/>
+
+  <!-- reconcile loop: two arrows chasing each other around the node -->
+  <g fill="none" stroke="url(#loop)" stroke-width="14" stroke-linecap="round">
+    <path d="M62.75 97.57 A72 72 0 0 1 188 94"/>
+    <path d="M193.25 158.43 A72 72 0 0 1 68 162"/>
+  </g>
+  <g fill="url(#loop)" stroke="url(#loop)" stroke-width="3" stroke-linejoin="round">
+    <polygon points="178,86 207,92 192.5,114"/>
+    <polygon points="78,170 49,164 63.5,142"/>
+  </g>
+
+  <!-- the managed node (a pod) with the identity spark inside -->
+  <circle cx="128" cy="128" r="34" fill="url(#glow)"/>
+  <polygon points="128,98 154,113 154,143 128,158 102,143 102,113" fill="none" stroke="#ffffff" stroke-width="8" stroke-linejoin="round"/>
+  <circle cx="128" cy="128" r="9" fill="#FFB020"/>
+</svg>

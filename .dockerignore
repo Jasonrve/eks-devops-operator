@@ -1,0 +1,6 @@
+# send the Docker daemon only what the Dockerfile copies: faster builds, better layer caching
+*
+!global.json
+!src/
+**/bin
+**/obj

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: eks-devops-operator
+description: Gives Kubernetes ServiceAccounts cross-account AWS access by creating IAM roles and EKS Pod Identity associations from one custom resource
+kubeVersion: ">=1.28.0-0"
+keywords: [eks, aws, iam, pod-identity, operator]
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    name: Build and test (Floci)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      # AWS emulator: no AWS credentials or account are needed anywhere in CI.
+      floci:
+        image: floci/floci@sha256:e0b292df4dc9559b7b1bf4f51bdda4bb8e269276236438cd03cae661260ea8a9   # floci 2.3.0
+        ports: ["4566:4566"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/*.csproj"
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release -warnaserror
+      - name: Wait for Floci
+        run: |
+          for i in $(seq 1 30); do curl -fs localhost:4566/_floci/health >/dev/null && exit 0; sleep 2; done
+          echo "Floci did not become healthy" >&2; exit 1
+      - name: Test
+        run: dotnet test --no-build -c Release --logger "trx;LogFileName=results.trx" --results-directory TestResults
+        env:
+          FLOCI_ENDPOINT: http://localhost:4566
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/*.trx
+      - name: Vulnerable NuGet packages
+        run: |
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable packages" vuln.txt; then echo "::error::vulnerable packages found"; exit 1; fi
+
+  chart:
+    name: Helm chart and CRD
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/*.csproj"
+      - uses: azure/setup-helm@v4
+      - name: Lint and render
+        run: |
+          helm lint deploy/helm/eks-devops-operator --set cluster.name=ci --strict
+          helm template ci deploy/helm/eks-devops-operator --set cluster.name=ci --set tags.CostCenter=ci \
+            --set serviceMonitor.enabled=true > /dev/null
+      - name: Chart CRD matches the C# entity
+        run: |
+          dotnet run --project src/EksDevopsOperator -c Release -- generate-crds "$PWD/deploy/helm/eks-devops-operator/crds"
+          git diff --exit-code -- deploy/helm/eks-devops-operator/crds \
+            || { echo "::error::CRD is out of date. Run: dotnet run --project src/EksDevopsOperator -- generate-crds \$PWD/deploy/helm/eks-devops-operator/crds"; exit 1; }
+
+  image:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write     # only used to publish the edge image from main
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          push: false
+          tags: eks-devops-operator:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Image size
+        run: |
+          bytes=$(docker image inspect eks-devops-operator:ci --format '{{.Size}}')
+          mb=$((bytes / 1024 / 1024))
+          echo "image size: ${mb} MB" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$mb" -le 80 ] || { echo "::error::image is ${mb} MB, over the 80 MB budget"; exit 1; }
+      - name: Smoke test the image
+        # The trimmed, self-contained build must still start, serve probes and metrics, and run the controller wiring.
+        # A kubeconfig that points nowhere is enough: the watchers just retry. Readiness stays unhealthy (no AWS), liveness does not.
+        run: |
+          mkdir -p "$RUNNER_TEMP/kube"
+          printf 'apiVersion: v1\nkind: Config\nclusters: [{name: c, cluster: {server: "http://127.0.0.1:9"}}]\nusers: [{name: u, user: {token: t}}]\ncontexts: [{name: x, context: {cluster: c, user: u}}]\ncurrent-context: x\n' > "$RUNNER_TEMP/kube/config"
+          chmod -R a+rX "$RUNNER_TEMP/kube"
+          docker run -d --name smoke -p 8080:8080 -v "$RUNNER_TEMP/kube:/kube:ro" -e KUBECONFIG=/kube/config \
+            -e Operator__ClusterName=ci -e Operator__PolicyNamespace=pio -e Operator__LeaderElection=false eks-devops-operator:ci
+          for i in $(seq 1 30); do curl -fs localhost:8080/health/live >/dev/null && break; sleep 1; done
+          curl -fs localhost:8080/health/live && echo " live ok"
+          curl -fs localhost:8080/metrics >/dev/null && echo "metrics ok"
+          docker logs smoke 2>&1 | tail -n 20
+          [ "$(docker inspect smoke --format '{{.State.Running}}')" = true ]
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: eks-devops-operator:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish edge image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/${{ github.repository }}:edge
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+
+  docs:
+    name: Docs build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - run: npm ci
+        working-directory: docs
+      - run: npm run build
+        working-directory: docs

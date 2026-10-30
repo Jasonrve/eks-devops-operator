@@ -1,0 +1,10 @@
+# Global tags live in a mounted JSON file (not env vars) because tag keys may contain characters that are not valid in env var names.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+data:
+  operator.json: |
+    {{ dict "Operator" (dict "Tags" .Values.tags) | toPrettyJson | nindent 4 }}

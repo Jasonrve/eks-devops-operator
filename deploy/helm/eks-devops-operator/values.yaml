@@ -1,0 +1,95 @@
+# -- Container image. Build with the repository Dockerfile and push to your registry.
+image:
+  repository: ghcr.io/jasonrve/eks-devops-operator
+  tag: ""                  # defaults to the chart appVersion
+  pullPolicy: IfNotPresent
+
+# -- Two replicas are safe: leader election keeps exactly one reconciling.
+replicaCount: 2
+
+cluster:
+  # -- REQUIRED. EKS cluster name. Trusted configuration; it is never read from a PodIdentityAccess.
+  name: ""
+  region: us-east-1
+  partition: aws          # aws, aws-cn or aws-us-gov
+
+serviceAccount:
+  # -- Needs an EKS Pod Identity association to the operator IAM role (see docs/guide/aws-setup).
+  name: eks-devops-operator
+
+# -- IRSA (IAM Roles for Service Accounts) as an alternative to EKS Pod Identity. Off by default, because it lets the operator set ONE
+# annotation (eks.amazonaws.com/role-arn) on ServiceAccounts, which needs the extra RBAC rule (get and patch on serviceaccounts) that is
+# added only when this is on. It also needs the cluster's IAM OIDC provider (a one-time setup), and eks:DescribeCluster plus
+# iam:GetOpenIDConnectProvider for the operator role. A PodIdentityPolicy still decides which teams may use it (policy.allowedMechanisms).
+irsa:
+  enabled: false
+  oidcIssuer: ""             # empty = discovered from the cluster; or set e.g. oidc.eks.eu-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
+
+# -- ServiceAccount annotations: a ServiceAccount annotated identity.platform.io/enabled=true gets a PodIdentityAccess or IrsaAccess created for it
+# (a policy template plus resource ARNs; see docs/guide/annotations.md). The generated resource passes the same PodIdentityPolicy guardrails.
+# Opt-in because it needs RBAC to list ServiceAccounts and create and delete the two access kinds in every namespace.
+serviceAccountAnnotations:
+  enabled: false
+  interval: "00:00:30"       # how often ServiceAccounts are checked for annotation changes (hh:mm:ss)
+
+# -- Tags added to EVERY AWS resource the operator creates (the IAM role and the Pod Identity association).
+# Teams can add their own through spec.tags but cannot change these. Max 10. Keys: letters, digits and _ . : / = @ -
+# Keys starting with pio: or aws: are reserved. Changing this updates existing resources at their next reconcile.
+tags: {}
+#  CostCenter: cc-1234
+#  ManagedBy: platform-team
+
+environment: dev            # recorded in the pio:environment tag
+
+# -- The default guardrail, rendered as a PodIdentityPolicy named "default" in the release namespace (deny by default).
+# Add more with `kubectl apply` of PodIdentityPolicy objects in that same namespace. Objects in any other namespace are ignored.
+# A request must satisfy EVERY policy that governs its namespace, and is denied if none does.
+policy:
+  create: true
+  namespaces: []                         # empty = all namespaces
+  allowedMechanisms: ["*"]               # how teams may bind the role: PodIdentity, IRSA. "*" = both (IRSA also needs irsa.enabled), [] = none
+  allowedServices: ["*"]                 # IAM service prefixes teams may use; "*" = every service, [] = none
+  allowedActions: ["*"]                  # e.g. ["s3:GetObject", "s3:ListBucket"]; "*" = every action, [] = none
+  deniedActions: []                      # e.g. ["s3:Delete*"]; always refused
+  allowedResourceArnPatterns: []         # e.g. ["arn:aws:s3:::payments-*"]; empty = any ARN of an allowed service
+  allowedManagedPolicyArns: []           # glob patterns; empty = none
+  allowedDeletionPolicies: [Delete, Retain]
+  requirePermissionsBoundary: true
+  allowWildcardActions: false
+  allowWildcardResources: false
+  allowPrivilegeEscalationActions: false
+
+# -- Permissions boundary (path + name) attached to every role. Must exist in the cluster account (roles are only created there).
+permissionsBoundary: /eks-devops-operator/standard-workload
+
+driftInterval: "00:10:00"     # how often Ready resources are re-checked against AWS (hh:mm:ss)
+maxConcurrentReconciles: 4
+logLevel: Information       # the operator's own logs: Debug, Information, Warning
+# -- Log level of KubeOps (the controller framework). Warning keeps an idle operator quiet; Information adds a line per reconcile and
+# per watch event, which helps when debugging a watch or queue problem.
+libraryLogLevel: Warning
+
+# -- Extra environment variables (for example AWS_ENDPOINT overrides in test clusters: Aws__ServiceUrl).
+extraEnv: []
+
+# -- Suggested sizing, from measuring the production image: about 50 MB at start, about 110 MB idle, a 150 MB peak while 300 resources
+# reconcile at once (averaging 0.5 core for 90 s). Memory request covers normal use, the memory limit leaves about 70% headroom over the
+# peak (the .NET GC keeps its heap under 75% of the limit, so it collects before the pod is OOM killed). The CPU limit lets start-up and
+# a large initial reconcile burst; remove it if you prefer no throttling. Raise the memory limit to 384Mi-512Mi for thousands of resources.
+resources:
+  requests: {cpu: 50m, memory: 128Mi}
+  limits: {cpu: "1", memory: 256Mi}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+serviceMonitor:
+  enabled: false             # requires the Prometheus Operator CRDs
+  interval: 30s
+  labels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}

@@ -1,0 +1,21 @@
+eks-devops-operator installed for cluster "{{ .Values.cluster.name }}".
+
+1. The operator ServiceAccount "{{ .Values.serviceAccount.name }}" in namespace "{{ .Release.Namespace }}" needs an
+   EKS Pod Identity association to the operator IAM role (see the docs: AWS setup). Until then /health/ready stays unhealthy.
+2. Guardrails are PodIdentityPolicy objects in THIS namespace ({{ .Release.Namespace }}). Policies anywhere else are ignored.
+{{- if .Values.policy.create }}
+   The chart created one named "default". With no matching policy every request is rejected.
+{{- else }}
+   policy.create=false: create your own, otherwise every request is rejected.
+{{- end }}
+{{- if .Values.irsa.enabled }}
+   IRSA is enabled: the operator may set the eks.amazonaws.com/role-arn annotation on ServiceAccounts. The cluster's IAM OIDC provider
+   must exist (one-time: eksctl utils associate-iam-oidc-provider --cluster {{ .Values.cluster.name }} --approve).
+{{- end }}
+3. Request access:  kubectl apply -f examples/payments-s3.yaml
+4. Watch it:        kubectl get podidentityaccesses,irsaaccesses -A
+                    kubectl -n <namespace> get events --field-selector involvedObject.name=<name>
+{{- if .Values.tags }}
+
+Global tags applied to every role and association: {{ keys .Values.tags | sortAlpha | join ", " }}
+{{- end }}

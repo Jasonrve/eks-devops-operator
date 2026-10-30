@@ -1,0 +1,16 @@
+apiVersion: identity.platform.io/v1alpha1
+kind: PodIdentityAccess
+metadata:
+  name: payments-s3
+  namespace: payments
+spec:
+  serviceAccountName: payments-api
+  # roleName: payments-s3          # optional prefix, the operator appends a stable hash
+  tags:                            # added to the platform team's global tags, on the role and the association
+    App: payments
+    Env: prod
+  statements:
+    - sid: ReadInvoices
+      actions: [s3:GetObject, s3:ListBucket]
+      resources: [arn:aws:s3:::payments-invoices, arn:aws:s3:::payments-invoices/*]
+  deletionPolicy: Delete           # Delete | Retain

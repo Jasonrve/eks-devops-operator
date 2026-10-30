@@ -1,0 +1,20 @@
+# IRSA (IAM Roles for Service Accounts): its own kind, IrsaAccess, next to PodIdentityAccess.
+#
+# The operator creates an IAM role that trusts the cluster's OIDC provider for exactly this ServiceAccount, and sets the
+# eks.amazonaws.com/role-arn annotation on it. Requirements (platform team): irsa.enabled=true in the Helm chart, the cluster's
+# IAM OIDC provider, and a PodIdentityPolicy whose allowedMechanisms includes IRSA (the default "*" does).
+# See docs/guide/irsa.md.
+apiVersion: identity.platform.io/v1alpha1
+kind: IrsaAccess
+metadata:
+  name: payments-s3-irsa
+  namespace: payments
+spec:
+  serviceAccountName: payments-api     # must exist; the operator annotates it
+  tags:
+    App: payments
+  statements:
+    - sid: ReadInvoices
+      actions: [s3:GetObject, s3:ListBucket]
+      resources: [arn:aws:s3:::payments-invoices, arn:aws:s3:::payments-invoices/*]
+  deletionPolicy: Delete               # Delete | Retain

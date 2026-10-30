@@ -1,0 +1,21 @@
+{{- if .Values.policy.create }}
+apiVersion: identity.platform.io/v1alpha1
+kind: PodIdentityPolicy
+metadata:
+  name: default
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+spec:
+  namespaces: {{ .Values.policy.namespaces | toJson }}
+  allowedMechanisms: {{ .Values.policy.allowedMechanisms | toJson }}
+  allowedServices: {{ .Values.policy.allowedServices | toJson }}
+  allowedActions: {{ .Values.policy.allowedActions | toJson }}
+  deniedActions: {{ .Values.policy.deniedActions | toJson }}
+  allowedResourceArnPatterns: {{ .Values.policy.allowedResourceArnPatterns | toJson }}
+  allowedManagedPolicyArns: {{ .Values.policy.allowedManagedPolicyArns | toJson }}
+  allowedDeletionPolicies: {{ .Values.policy.allowedDeletionPolicies | toJson }}
+  requirePermissionsBoundary: {{ .Values.policy.requirePermissionsBoundary }}
+  allowWildcardActions: {{ .Values.policy.allowWildcardActions }}
+  allowWildcardResources: {{ .Values.policy.allowWildcardResources }}
+  allowPrivilegeEscalationActions: {{ .Values.policy.allowPrivilegeEscalationActions }}
+{{- end }}
