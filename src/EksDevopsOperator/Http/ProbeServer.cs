@@ -28,7 +28,8 @@ public sealed class ProbeServer(OperatorOptions opt, IAwsAccountResolver aws, Me
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await using var stop = stoppingToken.Register(() => { try { _listener.Close(); // Close, not Stop: on Linux Stop leaves the socket listening } catch (ObjectDisposedException) { } });
+        // Close, not Stop: on Linux Stop leaves the socket listening
+        await using var stop = stoppingToken.Register(() => { try { _listener.Close(); } catch (ObjectDisposedException) { } });
         while (!stoppingToken.IsCancellationRequested)
         {
             HttpListenerContext context;
