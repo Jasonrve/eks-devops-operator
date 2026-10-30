@@ -134,7 +134,8 @@ public class ProbeServerTests : IAsyncLifetime
     [Fact] public async Task Stopping_the_server_frees_the_port()
     {
         await _server.StopAsync(CancellationToken.None);
-        var act = async () => await _http.GetAsync(Url("/health/live"));
+        using var fresh = new HttpClient { Timeout = TimeSpan.FromSeconds(5) }; // a new connection: pooled keep-alive ones may outlive the listener
+        var act = async () => await fresh.GetAsync(Url("/health/live"));
         await act.Should().ThrowAsync<HttpRequestException>();
     }
 }

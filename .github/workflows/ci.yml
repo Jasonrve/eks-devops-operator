@@ -127,6 +127,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lowercase image name
+        if: github.event_name == 'push'
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
       - name: Publish edge image
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
@@ -134,7 +137,7 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/${{ github.repository }}:edge
+          tags: ${{ env.IMAGE }}:edge
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
 
