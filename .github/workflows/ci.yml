@@ -43,7 +43,7 @@ jobs:
         run: dotnet test --no-build -c Release --logger "trx;LogFileName=results.trx" --results-directory TestResults
         env:
           FLOCI_ENDPOINT: http://localhost:4566
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results
