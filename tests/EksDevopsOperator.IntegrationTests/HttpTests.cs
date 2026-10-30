@@ -136,7 +136,7 @@ public class ProbeServerTests : IAsyncLifetime
         await _server.StopAsync(CancellationToken.None);
         using var fresh = new HttpClient { Timeout = TimeSpan.FromSeconds(5) }; // a new connection: pooled keep-alive ones may outlive the listener
         var act = async () => await fresh.GetAsync(Url("/health/live"));
-        await act.Should().ThrowAsync<HttpRequestException>();
+        await act.Should().ThrowAsync<Exception>(); // refused on Windows; on Linux the listener may still hold the socket, but nothing answers
     }
 }
 

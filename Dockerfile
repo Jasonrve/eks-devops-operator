@@ -13,12 +13,12 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG TARGETARCH
 WORKDIR /src
 
-# Restore first, on its own layer: it is only redone when the project file changes. The NuGet cache survives across builds.
+# Restore first, on its own layer: it is only redone when the project file changes. No cache mount: it would not travel with the layer cache, so a cached restore step would leave publish without packages.
 # These properties must match between restore and publish, or --no-restore cannot find the runtime and trimmer packs.
 ENV PUBLISH_PROPS="-p:SelfContained=true -p:PublishTrimmed=true -p:TrimMode=partial -p:UseAppHost=true -p:DebugType=none -p:DebugSymbols=false"
 COPY global.json ./
 COPY src/EksDevopsOperator/EksDevopsOperator.csproj src/EksDevopsOperator/
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN \
     RID="linux-$([ "$TARGETARCH" = arm64 ] && echo arm64 || echo x64)" && \
     dotnet restore src/EksDevopsOperator -r "$RID" $PUBLISH_PROPS
 
@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # The rm line drops debugger and crash-dump support, the standalone GC builds and the LTTng trace provider (about 7 MB together).
 # None is used unless a DOTNET_* variable asks for it, and diagnostics are switched off below.
 COPY src src
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN \
     RID="linux-$([ "$TARGETARCH" = arm64 ] && echo arm64 || echo x64)" && \
     dotnet publish src/EksDevopsOperator -c Release -r "$RID" --no-restore -o /out $PUBLISH_PROPS && \
     rm -f /out/appsettings.Development.json /out/libmscordaccore.so /out/libmscordbi.so /out/libdbgshim.so /out/createdump \
