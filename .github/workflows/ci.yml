@@ -67,14 +67,14 @@ jobs:
       - uses: azure/setup-helm@v4
       - name: Lint and render
         run: |
-          helm lint deploy/helm/eks-devops-operator --set cluster.name=ci --strict
-          helm template ci deploy/helm/eks-devops-operator --set cluster.name=ci --set tags.CostCenter=ci \
+          helm lint charts/eks-devops-operator --set cluster.name=ci --strict
+          helm template ci charts/eks-devops-operator --set cluster.name=ci --set tags.CostCenter=ci \
             --set serviceMonitor.enabled=true > /dev/null
       - name: Chart CRD matches the C# entity
         run: |
-          dotnet run --project src/EksDevopsOperator -c Release -- generate-crds "$PWD/deploy/helm/eks-devops-operator/crds"
-          git diff --exit-code -- deploy/helm/eks-devops-operator/crds \
-            || { echo "::error::CRD is out of date. Run: dotnet run --project src/EksDevopsOperator -- generate-crds \$PWD/deploy/helm/eks-devops-operator/crds"; exit 1; }
+          dotnet run --project src/EksDevopsOperator -c Release -- generate-crds "$PWD/charts/eks-devops-operator/crds"
+          git diff --exit-code -- charts/eks-devops-operator/crds \
+            || { echo "::error::CRD is out of date. Run: dotnet run --project src/EksDevopsOperator -- generate-crds \$PWD/charts/eks-devops-operator/crds"; exit 1; }
 
   image:
     name: Container image

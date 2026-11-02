@@ -42,7 +42,7 @@ jobs:
       - uses: azure/setup-helm@v4
       - name: Package and push chart
         run: |
-          helm package deploy/helm/eks-devops-operator --version "${{ steps.v.outputs.version }}" --app-version "${{ steps.v.outputs.version }}"
+          helm package charts/eks-devops-operator --version "${{ steps.v.outputs.version }}" --app-version "${{ steps.v.outputs.version }}"
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
           helm push eks-devops-operator-${{ steps.v.outputs.version }}.tgz oci://ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/charts
       - name: GitHub release
@@ -51,6 +51,6 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" --generate-notes \
             "eks-devops-operator-${{ steps.v.outputs.version }}.tgz" \
-            deploy/helm/eks-devops-operator/crds/identity.platform.io_podidentityaccesses.yaml \
-            deploy/helm/eks-devops-operator/crds/identity.platform.io_irsaaccesses.yaml \
-            deploy/helm/eks-devops-operator/crds/identity.platform.io_podidentitypolicies.yaml
+            charts/eks-devops-operator/crds/identity.platform.io_podidentityaccesses.yaml \
+            charts/eks-devops-operator/crds/identity.platform.io_irsaaccesses.yaml \
+            charts/eks-devops-operator/crds/identity.platform.io_podidentitypolicies.yaml

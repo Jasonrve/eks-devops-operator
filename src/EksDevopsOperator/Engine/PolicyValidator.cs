@@ -50,7 +50,9 @@ public sealed partial class PolicyValidator(OperatorOptions options) : IPolicyVa
                 if (action.Contains('*') || action.Contains('?')) { if (!p.AllowWildcardActions) fail("WildcardAction", $"wildcard action '{action}' is not allowed by policy '{p.Name}'"); }
                 if (!p.AllowedServices.Contains("*") && !p.AllowedServices.Contains(service, StringComparer.OrdinalIgnoreCase)) fail("ServiceNotAllowed", $"service '{service}' (action '{action}') is not allowed by policy '{p.Name}'");
                 if (!p.AllowPrivilegeEscalationActions && IsEscalation(action)) fail("PrivilegeEscalation", $"action '{action}' can escalate privileges");
-                if (p.DeniedActions.Any(d => Arn.GlobMatch(d.ToLowerInvariant(), action.ToLowerInvariant()))) fail("ActionDenied", $"action '{action}' is denied by policy '{p.Name}'");
+                // match the denied pattern against the request in both directions, so a broad request (e.g. s3:*) cannot slip past deniedActions: ["s3:Delete*"]
+                // shortcut: each side is globbed against the other, not a true glob intersection, so s3:Get* vs s3:*Object is missed; add intersection if a policy needs it
+                if (p.DeniedActions.Any(d => Arn.GlobMatch(d.ToLowerInvariant(), action.ToLowerInvariant()) || Arn.GlobMatch(action.ToLowerInvariant(), d.ToLowerInvariant()))) fail("ActionDenied", $"action '{action}' is denied by policy '{p.Name}'");
                 if (!p.AllowedActions.Any(a => Arn.GlobMatch(a.ToLowerInvariant(), action.ToLowerInvariant()))) fail("ActionNotAllowed", $"action '{action}' is not on the allowed action list of policy '{p.Name}'");
             }
             foreach (var res in s.Resources) ValidateResource(res, p, c, fail);

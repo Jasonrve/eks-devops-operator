@@ -77,7 +77,7 @@ The operator only ever removes keys it applied itself. Tags added by anyone else
 | `driftInterval` | `00:10:00` | How often Ready resources are re-verified. Also how soon a changed policy or tag is applied to existing resources. |
 | `maxConcurrentReconciles` | `4` | Parallel reconciles. Different resources are isolated by name and tags. |
 | `replicaCount` | `2` | Leader election means one active reconciler. |
-| `Operator__HttpPort` (via `extraEnv`) | `8080` | Port of `/health/live`, `/health/ready` and `/metrics`. In a pod it listens on every interface; on Windows only on `localhost`. |
+| `Operator__HttpPort` (via `extraEnv`) | `8080` | Port of `/health/live`, `/health/ready` and `/metrics`. The chart hardcodes 8080 (container port, Service and probes), so only override this when running outside the chart. In a pod it listens on every interface; on Windows only on `localhost`. |
 | `logLevel` | `Information` | Logs are JSON, with the resource uid, namespace and an attempt id in each scope. |
 
 ## Local and test clusters

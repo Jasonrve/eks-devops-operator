@@ -50,7 +50,7 @@ Changing `tags` rolls the operator pods (the config checksum changes) and update
 Helm installs files from the chart's `crds/` folder on **install only**; it never updates them on upgrade. When the CRD changes, apply it yourself first:
 
 ```sh
-kubectl apply -f deploy/helm/eks-devops-operator/crds/
+kubectl apply -f charts/eks-devops-operator/crds/
 ```
 :::
 

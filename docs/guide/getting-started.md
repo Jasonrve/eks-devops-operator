@@ -37,7 +37,7 @@ sh local/seed-floci.sh
 ## 3. Install the CRDs, a policy, and run the operator
 
 ```sh
-for f in deploy/helm/eks-devops-operator/crds/*.yaml; do docker exec -i k3s kubectl apply -f - < $f; done
+for f in charts/eks-devops-operator/crds/*.yaml; do docker exec -i k3s kubectl apply -f - < $f; done
 
 docker exec k3s kubectl create namespace pio     # the operator namespace: the only place PodIdentityPolicy objects are read
 docker exec -i k3s kubectl apply -f - <<'EOF'

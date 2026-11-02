@@ -10,7 +10,7 @@ src/EksDevopsOperator/
   Http/      probe and metrics endpoint: a small HttpListener plus a Prometheus text renderer (no web framework)
   Program.cs host, DI, CRD generation
 tests/EksDevopsOperator.IntegrationTests/   unit tests + engine tests against Floci
-deploy/helm/eks-devops-operator/    chart (CRD in crds/)
+charts/eks-devops-operator/         chart (CRD in crds/)
 docs/                                 this site (VitePress)
 ```
 
@@ -45,7 +45,7 @@ See [Getting started](/guide/getting-started) for k3s + Floci with the real cont
 The CRD is generated from `Kube/Entities.cs`. After changing it:
 
 ```sh
-dotnet run --project src/EksDevopsOperator -- generate-crds "$PWD/deploy/helm/eks-devops-operator/crds"
+dotnet run --project src/EksDevopsOperator -- generate-crds "$PWD/charts/eks-devops-operator/crds"
 ```
 
 CI fails if the committed CRD differs from the generated one.

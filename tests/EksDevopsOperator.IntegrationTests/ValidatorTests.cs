@@ -78,6 +78,7 @@ public class ValidatorTests
         var rule = Rule(p => p with { AllowedActions = ["s3:*"], AllowWildcardActions = true, DeniedActions = ["s3:Delete*"] });
         Run(Req(actions: ["s3:GetObject"]), rule).IsValid.Should().BeTrue();
         Run(Req(actions: ["s3:DeleteObject"]), rule).Issues.Should().Contain(i => i.Code == "ActionDenied");
+        Run(Req(actions: ["s3:*"]), rule).Issues.Should().Contain(i => i.Code == "ActionDenied"); // a wildcard request must not slip past a denied pattern
     }
 
     // ---- tags

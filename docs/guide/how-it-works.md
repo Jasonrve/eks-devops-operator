@@ -68,6 +68,24 @@ Every pass is level-based and safe to repeat:
 
 Ready resources are re-checked every `driftInterval` (default 10 minutes).
 
+```mermaid
+flowchart TD
+    req([Reconcile request]) --> val{Validate against<br/>guardrails}
+    val -->|fails a policy| inv[Invalid — no AWS change]
+    val -->|ok| cf{ServiceAccount<br/>already claimed?}
+    cf -->|older claim wins| con[Conflict — no AWS change]
+    cf -->|no| obs[Observe AWS<br/>read-only]
+    obs -->|role/binding not ours| fail[Failed — refuse to touch]
+    obs -->|ours or absent| plan{Plan —<br/>already converged?}
+    plan -->|yes| ready([Ready])
+    plan -->|no| exec[Execute in order<br/>role → policy → binding]
+    exec --> ver{Read back —<br/>matches desired?}
+    ver -->|yes| ready
+    ver -->|not yet| wait[Wait for eventual<br/>consistency]
+    wait --> obs
+    ready -.->|re-checked every driftInterval| req
+```
+
 ## Changing and deleting
 
 | Change | Behaviour |

@@ -71,6 +71,23 @@ status:
     - {type: Ready, status: "True", reason: ReconciliationSucceeded}
 ```
 
+The `phase` moves through this lifecycle (`IrsaAccess` is identical):
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: created
+    Pending --> Ready: role + binding verified
+    Pending --> Invalid: fails guardrails
+    Pending --> Conflict: SA already claimed
+    Pending --> Failed: AWS error
+    Invalid --> Ready: spec corrected
+    Conflict --> Ready: other claim removed
+    Failed --> Ready: retry succeeds
+    Ready --> Ready: drift repaired every driftInterval
+    Ready --> Pending: spec changed
+    Ready --> [*]: deleted (finalizer cleans up)
+```
+
 ## Behaviour notes
 
 - Use the ServiceAccount named in `serviceAccountName` in your pod spec. Restart pods created before the association existed.

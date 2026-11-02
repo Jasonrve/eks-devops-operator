@@ -133,7 +133,7 @@ Read the full [security model](docs/guide/security.md), including residual risks
 ```text
 src/EksDevopsOperator/   Engine/ (validate, plan, reconcile)  Aws/ (SDK calls)  Kube/ (CRDs, controller)
 tests/                      unit tests + engine tests against Floci
-deploy/helm/                Helm chart (the CRDs live in crds/)
+charts/                     Helm chart (the CRDs live in crds/)
 docs/                       VitePress documentation site
 examples/                   ready-to-apply resources
 local/                      Floci seeding script for local runs

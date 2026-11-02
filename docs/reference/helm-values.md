@@ -1,6 +1,6 @@
 # Helm values
 
-The chart is `deploy/helm/eks-devops-operator`. Defaults are in its `values.yaml`.
+The chart is `charts/eks-devops-operator`. Defaults are in its `values.yaml`.
 
 | Value | Default | Description |
 |---|---|---|
