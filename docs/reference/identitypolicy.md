@@ -232,6 +232,24 @@ aws s3api list-buckets
 
 The role in the other account needs its own permissions (for example `s3:ListAllMyBuckets`). The operator grants nothing there.
 
+### Allowing any account or role
+
+`roleArns` entries are patterns, so `*` matches any account and any role:
+
+```yaml
+crossAccountPolicy:
+  namespaces: [payments]
+  roleArns:
+    - "arn:aws:iam::*:role/*"            # any role in any account
+```
+
+Narrower patterns work too, for example `arn:aws:iam::*:role/reports-*` (any account, roles starting with `reports-`) or
+`arn:aws:iam::634107240400:role/*` (every role in one account).
+
+This is broad. The grant lets the listed namespaces assume any role in any account whose trust policy trusts the operator-created role. Account
+owners still control access through their trust policies, so only roles that explicitly trust the operator's role can be assumed. Keep the
+namespace list short and prefer a narrower pattern when you can.
+
 ## Permissions boundary
 
 The permissions boundary is a ceiling on every role the operator creates. It is set by the Helm value `permissionsBoundary`, not by

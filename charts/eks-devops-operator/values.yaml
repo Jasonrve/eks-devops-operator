@@ -59,7 +59,7 @@ policy:
   allowWildcardResources: false
   allowPrivilegeEscalationActions: false
 
-# -- Optional cross-account grant: lets the listed namespaces request sts:AssumeRole and sts:TagSession on these exact role ARNs in other
+# -- Optional cross-account grant: lets the listed namespaces request sts:AssumeRole and sts:TagSession on these role ARN patterns in other (* matches any part, e.g. arn:aws:iam::*:role/* for any account)
 # accounts. Rendered as an IdentityPolicy named "cross-account" only when roleArns is not empty. Namespaces are required with it, so the
 # grant can never apply cluster-wide. The target role's trust policy must trust the operator-created role.
 crossAccountPolicy:

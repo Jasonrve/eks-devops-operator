@@ -255,6 +255,20 @@ public class DefaultPolicyTests
             .Issues.Should().Contain(i => i.Code == "PrivilegeEscalation");
     }
 
+    [Fact] public void A_grant_pattern_can_cover_any_account_and_role()
+    {
+        var ctx = new ClusterContext("c1", "111111111111", "aws", "us-east-1", "dev");
+        AccessRequest Request(string resource) => new()
+        {
+            Namespace = "payments", ObjectName = "x", Uid = "u", ServiceAccount = "api",
+            Statements = [new PolicyStatement("S", "Allow", ["sts:AssumeRole"], [resource])],
+        };
+        var defaults = new PolicyRule { Name = "default", AllowedActions = ["*"] };
+        var anyAccount = new PolicyRule { Name = "cross-account", AllowedServices = ["sts"], AllowedActions = ["sts:AssumeRole", "sts:TagSession"], AllowedResourceArnPatterns = ["arn:aws:iam::*:role/*"] };
+        new PolicyValidator(new OperatorOptions()).Validate(Request("arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader"), [defaults, anyAccount], ctx).IsValid.Should().BeTrue();
+        new PolicyValidator(new OperatorOptions()).Validate(Request("arn:aws:iam::123456789012:role/any/path/reader"), [defaults, anyAccount], ctx).IsValid.Should().BeTrue();
+    }
+
     [Fact] public void Wildcards_and_escalation_pass_only_when_explicitly_enabled() =>
         Run(new PolicyRule { Name = "p", AllowWildcardActions = true, AllowPrivilegeEscalationActions = true, AllowWildcardResources = true }, "iam:*").IsValid.Should().BeTrue();
 
