@@ -29,20 +29,23 @@ public sealed class AwsClients : IAwsAccountResolver
     {
         _region = o.Region;
         _log = log;
-        Iam = new AmazonIdentityManagementServiceClient(Configure(new AmazonIdentityManagementServiceConfig(), o));
+        Iam = new AmazonIdentityManagementServiceClient(Configure(new AmazonIdentityManagementServiceConfig(), o, GlobalSigningRegion));
         Eks = new AmazonEKSClient(Configure(new AmazonEKSConfig(), o));
         Sts = new AmazonSecurityTokenServiceClient(Configure(new AmazonSecurityTokenServiceConfig(), o));
     }
+
+    // IAM is a global service: its requests must be signed for us-east-1 whatever region the cluster is in.
+    const string GlobalSigningRegion = "us-east-1";
 
     public IAmazonIdentityManagementService Iam { get; }
     public IAmazonEKS Eks { get; }
     public IAmazonSecurityTokenService Sts { get; }
 
-    static T Configure<T>(T cfg, AwsOptions o) where T : ClientConfig
+    static T Configure<T>(T cfg, AwsOptions o, string? signingRegion = null) where T : ClientConfig
     {
         if (!string.IsNullOrEmpty(o.ServiceUrl)) cfg.ServiceURL = o.ServiceUrl;
         else cfg.RegionEndpoint = RegionEndpoint.GetBySystemName(o.Region);
-        cfg.AuthenticationRegion = o.Region;
+        cfg.AuthenticationRegion = signingRegion ?? o.Region;
         if (o.HttpClientFactory is not null) cfg.HttpClientFactory = o.HttpClientFactory;
         return cfg;
     }
