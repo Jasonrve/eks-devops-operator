@@ -12,8 +12,10 @@ public static class Naming
 
     public static bool IsValidRequestedName(string name) => Requested.IsMatch(name);
 
-    public static string Hash(params string[] parts) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('|', parts))))[..8].ToLowerInvariant();
+    public static string Hash(params string[] parts) => Token(parts)[..8];
+
+    public static string Token(params string[] parts) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('|', parts)))).ToLowerInvariant();
 
     /// Deterministic, collision-resistant role name: "{readable}-{hash8}" (<= 64 chars). The hash covers the cluster account, cluster,
     /// namespace and ServiceAccount, so truncating the readable part cannot cause collisions and a requested name can never
