@@ -1,4 +1,5 @@
 using Amazon.IdentityManagement.Model;
+using Amazon.Runtime;
 using EksDevopsOperator.Core;
 
 namespace EksDevopsOperator.Aws;
@@ -43,6 +44,10 @@ public sealed class IamRoleManager(AwsClients aws) : IIamRoleManager
                 return;
             }
             catch (EntityAlreadyExistsException) { cur = await ReadAsync(want.Name, ct); } // created by someone else since we looked: converge it
+            catch (AmazonServiceException e) when (want.PermissionsBoundaryArn is not null && IsBoundaryRefusal(e))
+            {
+                throw BoundaryError(want, "CreateRole", e);
+            }
         }
 
         if (!PolicyJson.Equivalent(cur.TrustPolicy, want.TrustPolicy))
@@ -50,13 +55,25 @@ public sealed class IamRoleManager(AwsClients aws) : IIamRoleManager
         if (cur.PermissionsBoundaryArn != want.PermissionsBoundaryArn)
         {
             if (want.PermissionsBoundaryArn is null) await Telemetry.AwsCall("iam", "DeleteRolePermissionsBoundary", () => iam.DeleteRolePermissionsBoundaryAsync(new DeleteRolePermissionsBoundaryRequest { RoleName = want.Name }, ct));
-            else await Telemetry.AwsCall("iam", "PutRolePermissionsBoundary", () => iam.PutRolePermissionsBoundaryAsync(new PutRolePermissionsBoundaryRequest { RoleName = want.Name, PermissionsBoundary = want.PermissionsBoundaryArn }, ct));
+            else
+            {
+                try { await Telemetry.AwsCall("iam", "PutRolePermissionsBoundary", () => iam.PutRolePermissionsBoundaryAsync(new PutRolePermissionsBoundaryRequest { RoleName = want.Name, PermissionsBoundary = want.PermissionsBoundaryArn }, ct)); }
+                catch (AmazonServiceException e) when (IsBoundaryRefusal(e)) { throw BoundaryError(want, "PutRolePermissionsBoundary", e); }
+            }
         }
         var missing = want.Tags.Where(t => !cur.Tags.TryGetValue(t.Key, out var v) || v != t.Value).Select(t => new Tag { Key = t.Key, Value = t.Value }).ToList();
         if (missing.Count > 0) await Telemetry.AwsCall("iam", "TagRole", () => iam.TagRoleAsync(new TagRoleRequest { RoleName = want.Name, Tags = missing }, ct));
         var stale = TagRules.Stale(cur.Tags, want.Tags); // only keys the operator itself applied earlier
         if (stale.Count > 0) await Telemetry.AwsCall("iam", "UntagRole", () => iam.UntagRoleAsync(new UntagRoleRequest { RoleName = want.Name, TagKeys = stale }, ct));
     }
+
+    static bool IsBoundaryRefusal(AmazonServiceException e) => e.ErrorCode is "NoSuchEntity" or "AccessDenied";
+
+    static PodIdentityException BoundaryError(DesiredRole want, string operation, AmazonServiceException e) => e.ErrorCode == "NoSuchEntity"
+        ? new PodIdentityException(ErrorKind.Permanent, "PermissionsBoundaryNotFound",
+            $"role {want.Name} not changed: permissions boundary {want.PermissionsBoundaryArn} does not exist in this account. Create that policy, or set permissionsBoundary to one that exists.", e)
+        : new PodIdentityException(ErrorKind.Authorization, "PermissionsBoundaryDenied",
+            $"IAM denied {operation} for role {want.Name} with permissions boundary {want.PermissionsBoundaryArn}. The operator role must be allowed {operation} with iam:PermissionsBoundary set to that boundary, and the account must permit that boundary. AWS said: {e.Message}", e);
 
     public async Task DeleteRoleAsync(string roleName, CancellationToken ct)
     {

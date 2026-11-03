@@ -30,8 +30,9 @@ Choose another `roleName`, or delete the stale role if you are sure it is unused
 
 **`AssociationNotOwned`**: a Pod Identity association for that ServiceAccount already exists (created by hand, Terraform or another tool). Remove it or use another ServiceAccount.
 
-**`AccessDenied`** on `iam:CreateRole`: the operator role requires the permissions boundary in its condition, and the boundary policy does not exist at the configured path,
-or `permissionsBoundary` does not match the one in the IAM condition.
+**`PermissionsBoundaryNotFound`**: the permissions boundary set in `permissionsBoundary` does not exist in the cluster account, so no role was created. Create that policy at the configured path and name, or set `permissionsBoundary` to one that exists.
+
+**`PermissionsBoundaryDenied`**: IAM refused to create or change a role with the configured boundary. Either the operator role's `iam:CreateRole` (or `iam:PutRolePermissionsBoundary`) condition does not allow that boundary, or the account's policies do not permit it. Check that `permissionsBoundary` matches the boundary named in the operator role's IAM condition.
 
 **`AccessDenied`** on `eks:TagResource`, or on `iam:TagRole`: add the tagging actions from [AWS setup](/guide/aws-setup) to the operator role.
 

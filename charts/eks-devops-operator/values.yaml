@@ -59,7 +59,9 @@ policy:
   allowWildcardResources: false
   allowPrivilegeEscalationActions: false
 
-# -- Permissions boundary (path + name) attached to every role. Must exist in the cluster account (roles are only created there).
+# -- Permissions boundary (path + name) attached to EVERY role the operator creates, and to existing roles at their next reconcile.
+# Must exist in the cluster account and be permitted by the operator role's iam:CreateRole condition. Empty = no boundary (not recommended).
+# A missing boundary fails the request with PermissionsBoundaryNotFound; a refused one fails with PermissionsBoundaryDenied.
 permissionsBoundary: /eks-devops-operator/standard-workload
 
 driftInterval: "00:10:00"     # how often Ready resources are re-checked against AWS (hh:mm:ss)

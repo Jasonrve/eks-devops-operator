@@ -118,7 +118,7 @@ public sealed class AccessEngine(
 
         // 3. desired state (IRSA roles trust the cluster's OIDC provider, which must exist: that is checked here, before anything is created)
         var oidcInfo = req.Mechanism == Mechanism.Irsa ? await oidc.ResolveAsync(cluster, ct) : null;
-        var d = BuildDesired(req, matching, cluster, oidcInfo, out var invalid);
+        var d = BuildDesired(req, cluster, oidcInfo, out var invalid);
         if (invalid is not null)
             return new ReconcileResult(Phase.Invalid, [new("Validated", false, "PolicyTooLarge", invalid), new("Ready", false, "ValidationFailed", invalid)], Error: ErrorKind.Permanent, Message: invalid);
         var binding = bindings.For(req.Mechanism);
@@ -201,10 +201,10 @@ public sealed class AccessEngine(
 
     // ---------------------------------------------------------------- desired state
 
-    DesiredAccess BuildDesired(AccessRequest req, IReadOnlyList<PolicyRule> matching, ClusterContext c, OidcInfo? oidcInfo, out string? invalid)
+    DesiredAccess BuildDesired(AccessRequest req, ClusterContext c, OidcInfo? oidcInfo, out string? invalid)
     {
         invalid = null;
-        var boundary = matching.Any(p => p.RequirePermissionsBoundary) ? Arn.Policy(c.Partition, c.AccountId, opt.PermissionsBoundary) : null;
+        var boundary = string.IsNullOrWhiteSpace(opt.PermissionsBoundary) ? null : Arn.Policy(c.Partition, c.AccountId, opt.PermissionsBoundary);
         var name = Naming.RoleName(c, req);
         var permissions = req.Statements.Count > 0 ? PolicyDocuments.Permissions(req.Statements) : null;
         if (permissions is { Length: > MaxInlineChars }) invalid = $"generated permission policy is {permissions.Length} characters; the limit is {MaxInlineChars}";
