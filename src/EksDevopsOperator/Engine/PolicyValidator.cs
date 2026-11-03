@@ -85,7 +85,7 @@ public sealed partial class PolicyValidator(OperatorOptions options) : IPolicyVa
         if (r.Mechanism == Mechanism.Irsa && !options.IrsaEnabled) fail("IrsaDisabled", "IRSA is not enabled on this operator (platform team: set Helm value irsa.enabled=true)");
         if (r.RequestedRoleName is not null)
         {
-            if (!Naming.IsValidRequestedName(r.RequestedRoleName)) fail("InvalidRoleName", "role name must match ^[a-z0-9][a-z0-9-]{0,39}$");
+            if (!Naming.IsValidRequestedName(r.RequestedRoleName)) fail("InvalidRoleName", "role name must match ^[a-z0-9][a-z0-9-]{0,63}$");
             if (options.ProtectedRoleNamePatterns.Any(pat => Arn.GlobMatch(pat, r.RequestedRoleName))) fail("ProtectedRoleName", $"role name '{r.RequestedRoleName}' matches a protected role pattern");
         }
         foreach (var (code, message) in TagRules.Validate(r.Tags, options.Tags, isGlobal: false)) fail(code, message);
