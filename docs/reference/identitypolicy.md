@@ -147,13 +147,90 @@ Policies are cached for up to 5 seconds, so a change takes effect within seconds
 
 ### `allowPrivilegeEscalationActions`
 - **Type:** boolean. **Default:** `false`.
-- Actions that can grant more access than they appear to are refused with `PrivilegeEscalation` unless this is `true`. The check covers:
+- Actions that can grant more access than they appear to are refused with `PrivilegeEscalation` unless this is `true`, or unless a policy
+  names the action exactly (see [explicit grants](#explicit-grants-for-escalating-actions) below). The check covers:
   - every action of the services `iam`, `sts`, `organizations`, `account`, `sso`, `sso-admin`, `identitystore`, `cloudformation`
   - any action in the service `*`
   - these specific actions: `ec2:AssociateIamInstanceProfile`, `ec2:ReplaceIamInstanceProfileAssociation`, `lambda:CreateFunction`,
     `lambda:UpdateFunctionCode`, `lambda:UpdateFunctionConfiguration`, `kms:CreateGrant`, `kms:PutKeyPolicy`, `s3:PutBucketPolicy`,
     `s3:PutBucketAcl`, `secretsmanager:PutResourcePolicy`, `sqs:AddPermission`, `sns:AddPermission`, `ssm:SendCommand`, `ssm:StartSession`
   - `sts:GetCallerIdentity` is always allowed
+
+## Explicit grants for escalating actions
+
+`allowPrivilegeEscalationActions: true` lets a policy allow every escalating action, which is broad. A narrower route is an explicit grant:
+an escalating action is allowed for a request when **a governing policy names that exact action** (no `*` in it) and that policy's
+`allowedResourceArnPatterns` cover **every** resource of the statement.
+
+- The granting policy does not need `allowPrivilegeEscalationActions`. The grant is per action and per resource pattern.
+- The other governing policies still apply. A default policy with `allowedActions: ["*"]` accepts the action, so the grant is enough.
+- A wildcard such as `sts:*` does not count as a grant, and neither does an action with no resource patterns.
+
+This is how the chart's `crossAccountPolicy` works (see below).
+
+## Cross-account role assumption
+
+A pod can assume a role in another AWS account. The role the operator creates (in the cluster account) is the one the pod gets from Pod
+Identity. It then calls `sts:AssumeRole` on the role in the other account. Two things must allow it:
+
+1. **The IdentityPolicy** for the namespace grants `sts:AssumeRole` and `sts:TagSession` on that exact role ARN. `sts:AssumeRole` is an
+   escalating action, so the grant must be explicit (see above).
+2. **The target role's trust policy** (in the other account) trusts the operator-created role. Account owners set this; the operator cannot.
+
+The Helm chart can render the grant for you:
+
+```yaml
+# values.yaml
+crossAccountPolicy:
+  namespaces: [payments]
+  roleArns:
+    - arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader
+```
+
+This renders an `IdentityPolicy` named `cross-account`, which allows only `sts:AssumeRole` and `sts:TagSession` on those ARNs, for those
+namespaces. Namespaces are required when `roleArns` is set, so the grant cannot apply to every namespace.
+
+The team's `PodIdentityAccess` then asks for the assume-role permission, and the operator creates the role and association:
+
+```yaml
+apiVersion: identity.platform.io/v1alpha1
+kind: PodIdentityAccess
+metadata:
+  name: payments-s3-list-other-account
+  namespace: payments
+spec:
+  serviceAccountName: payments-s3-list
+  roleName: payments-s3-list
+  statements:
+    - sid: AssumeS3ListReader
+      actions: [sts:AssumeRole, sts:TagSession]
+      resources: [arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader]
+```
+
+The trust policy the other account needs for this example (the principal is the role the operator created):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [{
+        "Effect": "Allow",
+        "Principal": {"AWS": "arn:aws:iam::622515864211:role/eks-devops-operator/payments-s3-list"},
+        "Action": ["sts:AssumeRole", "sts:TagSession"]
+    }]
+}
+```
+
+Inside the pod, the AWS SDK or CLI calls `aws sts assume-role` with the target ARN and uses the returned credentials. Trying it with the
+CLI:
+
+```sh
+CREDS=$(aws sts assume-role --role-arn arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader \
+  --role-session-name payments --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text)
+set -- $CREDS; export AWS_ACCESS_KEY_ID=$1 AWS_SECRET_ACCESS_KEY=$2 AWS_SESSION_TOKEN=$3
+aws s3api list-buckets
+```
+
+The role in the other account needs its own permissions (for example `s3:ListAllMyBuckets`). The operator grants nothing there.
 
 ## Permissions boundary
 

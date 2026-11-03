@@ -26,12 +26,12 @@ public sealed partial class PolicyValidator(OperatorOptions options) : IPolicyVa
 
         // deny by default: at least one IdentityPolicy must govern the namespace, and every governing policy must accept the request
         if (matching.Count == 0) Fail("NamespaceNotAuthorized", $"no IdentityPolicy applies to namespace '{r.Namespace}'");
-        foreach (var p in matching) ValidateAgainstPolicy(r, p, cluster, Fail);
+        foreach (var p in matching) ValidateAgainstPolicy(r, p, matching, cluster, Fail);
         ValidateCommon(r, Fail);
         return new ValidationResult(issues);
     }
 
-    void ValidateAgainstPolicy(AccessRequest r, PolicyRule p, ClusterContext c, Action<string, string> fail)
+    void ValidateAgainstPolicy(AccessRequest r, PolicyRule p, IReadOnlyList<PolicyRule> matching, ClusterContext c, Action<string, string> fail)
     {
         var mechanism = MechanismNames.Name(r.Mechanism);
         if (!p.AllowedMechanisms.Contains("*") && !p.AllowedMechanisms.Contains(mechanism, StringComparer.OrdinalIgnoreCase)) fail("MechanismNotAllowed", $"policy '{p.Name}' does not allow the {mechanism} mechanism");
@@ -49,7 +49,7 @@ public sealed partial class PolicyValidator(OperatorOptions options) : IPolicyVa
                 var service = action.Split(':')[0].ToLowerInvariant();
                 if (action.Contains('*') || action.Contains('?')) { if (!p.AllowWildcardActions) fail("WildcardAction", $"wildcard action '{action}' is not allowed by policy '{p.Name}'"); }
                 if (!p.AllowedServices.Contains("*") && !p.AllowedServices.Contains(service, StringComparer.OrdinalIgnoreCase)) fail("ServiceNotAllowed", $"service '{service}' (action '{action}') is not allowed by policy '{p.Name}'");
-                if (!p.AllowPrivilegeEscalationActions && IsEscalation(action)) fail("PrivilegeEscalation", $"action '{action}' can escalate privileges");
+                if (!p.AllowPrivilegeEscalationActions && IsEscalation(action) && !ExplicitlyGranted(action, s, matching)) fail("PrivilegeEscalation", $"action '{action}' can escalate privileges");
                 // match the denied pattern against the request in both directions, so a broad request (e.g. s3:*) cannot slip past deniedActions: ["s3:Delete*"]
                 // shortcut: each side is globbed against the other, not a true glob intersection, so s3:Get* vs s3:*Object is missed; add intersection if a policy needs it
                 if (p.DeniedActions.Any(d => Arn.GlobMatch(d.ToLowerInvariant(), action.ToLowerInvariant()) || Arn.GlobMatch(action.ToLowerInvariant(), d.ToLowerInvariant()))) fail("ActionDenied", $"action '{action}' is denied by policy '{p.Name}'");
@@ -70,6 +70,13 @@ public sealed partial class PolicyValidator(OperatorOptions options) : IPolicyVa
         if (p.AllowedResourceArnPatterns.Count > 0 && !p.AllowedResourceArnPatterns.Any(pat => Arn.GlobMatch(pat, res)))
             fail("ResourceOutOfScope", $"resource '{res}' is outside the scope approved by policy '{p.Name}'");
     }
+
+    /// An escalating action is allowed when a governing policy names it exactly (no wildcard) and that policy's resource patterns
+    /// cover every resource of the statement. A broad grant (allowPrivilegeEscalationActions) is not needed for this.
+    static bool ExplicitlyGranted(string action, PolicyStatement s, IReadOnlyList<PolicyRule> matching) =>
+        matching.Any(q => q.AllowedActions.Any(a => !a.Contains('*') && a.Equals(action, StringComparison.OrdinalIgnoreCase))
+            && q.AllowedResourceArnPatterns.Count > 0
+            && s.Resources.All(res => q.AllowedResourceArnPatterns.Any(pat => Arn.GlobMatch(pat, res))));
 
     public static bool IsEscalation(string action)
     {

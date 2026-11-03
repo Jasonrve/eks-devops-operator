@@ -19,3 +19,19 @@ spec:
   allowWildcardResources: {{ .Values.policy.allowWildcardResources }}
   allowPrivilegeEscalationActions: {{ .Values.policy.allowPrivilegeEscalationActions }}
 {{- end }}
+{{- if .Values.crossAccountPolicy.roleArns }}
+{{- if not .Values.crossAccountPolicy.namespaces }}{{ fail "crossAccountPolicy.namespaces must list the namespaces allowed to assume these roles" }}{{- end }}
+---
+apiVersion: identity.platform.io/v1alpha1
+kind: IdentityPolicy
+metadata:
+  name: cross-account
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "pio.labels" . | nindent 4 }}
+spec:
+  namespaces: {{ .Values.crossAccountPolicy.namespaces | toJson }}
+  allowedServices: [sts]
+  allowedActions: [sts:AssumeRole, sts:TagSession]
+  allowedResourceArnPatterns: {{ .Values.crossAccountPolicy.roleArns | toJson }}
+  allowPrivilegeEscalationActions: false
+{{- end }}
