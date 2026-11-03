@@ -39,7 +39,7 @@ For one `PodIdentityAccess` the operator owns two AWS objects:
    - **Permissions boundary** when the policies require one, **tags** (below), and ownership tags.
 2. **Association** in the cluster: `namespace/serviceAccount → role`, with the same tags.
 
-Role names are deterministic, `pio-<cluster>-<namespace>-<serviceaccount>-<hash>`. The hash covers the full identity, so truncation can never collide.
+Role names are the requested `roleName` exactly, or `<cluster>-<namespace>-<serviceaccount>` by default. There is no hash suffix. A name that is already taken by another role is refused with `RoleNameTaken`, and the operator never modifies it.
 
 ## Tags
 

@@ -26,7 +26,7 @@ There is a ready-to-apply copy in `examples/payments-annotated-sa.yaml`.
 | `identity.platform.io/policy-template` | yes | A built-in set of permissions, see below. Annotations never carry policy JSON. |
 | `identity.platform.io/resource-arns` | yes | Comma separated ARNs the template applies to. |
 | `identity.platform.io/mechanism` | no | `PodIdentity` (default) or `IRSA`. Chooses which kind is created. |
-| `identity.platform.io/role-name` | no | Role name prefix, as `spec.roleName`. |
+| `identity.platform.io/role-name` | no | Exact role name, as `spec.roleName`. |
 | `identity.platform.io/deletion-policy` | no | `Delete` (default) or `Retain`. |
 | `identity.platform.io/tags` | no | `Key=Value,Key2=Value2`, as `spec.tags`. |
 

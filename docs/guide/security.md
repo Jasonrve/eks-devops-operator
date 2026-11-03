@@ -15,8 +15,8 @@ Use Kubernetes RBAC to give teams `create/get/list/update/delete` on `podidentit
 1. **Validate before any AWS write.** Invalid requests are rejected with a precise reason and `phase: Invalid`. Every reconcile re-validates, so editing a resource cannot bypass a check. If you tighten the guardrails later, existing resources become `Invalid` at their next reconcile and stop being changed. Their AWS resources are left as they are, not deleted.
 2. **Guardrails live where teams cannot write.** `PodIdentityPolicy` objects are read only from the operator's own namespace (enforced in code and by a namespaced Role). A policy created in a team namespace is ignored. Restrict write access to the operator namespace to platform admins.
 3. **Deny by default.** No policy governing the namespace, or an unmatched action or resource, means rejection.
-4. **No role-name hijacking.** Role names are generated as `readable-part + hash(account, cluster, namespace, serviceaccount)`.
-   A requested `roleName` is only a prefix, it must be lowercase and short, and protected patterns (`*Admin*`, `aws-*`, `eks-*`, ...) are refused.
+4. **No role-name hijacking.** A requested `roleName` must be lowercase and at most 64 characters, and protected patterns (`*Admin*`, `aws-*`, `eks-*`, ...) are refused.
+   A name already held by another role is refused with `RoleNameTaken`, so one workload cannot take over another's role.
 5. **Ownership checks.** Before modifying or deleting a role, the operator reads its tags and path. A role not tagged by this operator and cluster, or tagged for another namespace or ServiceAccount, is **never touched**: the request fails with `RoleNotOwned`.
    An existing association that the operator does not own is never overwritten (`AssociationNotOwned`).
 6. **Strict trust policy.** The role trusts only `pods.eks.amazonaws.com`, scoped to this account and cluster. Session tags stay on, and the trust requires the expected namespace, ServiceAccount and cluster name. No account root, no wildcard principal.

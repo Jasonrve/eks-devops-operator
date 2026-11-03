@@ -157,7 +157,7 @@ public class EngineFlociTests(EngineHarness h) : IClassFixture<EngineHarness>
     {
         var ns = h.NewNamespace();
         var req = h.Request(ns);
-        var name = Naming.RoleName(h.Options, new ClusterContext(h.Cluster, EngineHarness.A, "aws", "us-east-1", "dev"), req);
+        var name = Naming.RoleName(new ClusterContext(h.Cluster, EngineHarness.A, "aws", "us-east-1", "dev"), req);
         var victim = """{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}""";
         await h.Iam().CreateRoleAsync(new CreateRoleRequest { RoleName = name, Path = "/eks-devops-operator/", AssumeRolePolicyDocument = victim });
         var r = await h.Reconcile(req);

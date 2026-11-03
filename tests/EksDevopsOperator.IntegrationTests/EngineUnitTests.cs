@@ -301,7 +301,7 @@ public class EngineUnitTests
 
         rig.Conflicts.Conflicts.Clear();
         var req = EngineRig.Request();
-        var name = Naming.RoleName(rig.Options, new ClusterContext("c1", "111111111111", "aws", "us-east-1", "dev"), req);
+        var name = Naming.RoleName(new ClusterContext("c1", "111111111111", "aws", "us-east-1", "dev"), req);
         rig.Aws.Roles[name] = new FakeAws.FakeRole { Arn = $"arn:aws:iam::111111111111:role/eks-devops-operator/{name}", Path = "/eks-devops-operator/" }; // exists, not ours
         rig.Log.Clear();
         await rig.Reconcile(req);

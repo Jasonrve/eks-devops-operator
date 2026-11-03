@@ -205,7 +205,7 @@ public sealed class AccessEngine(
     {
         invalid = null;
         var boundary = matching.Any(p => p.RequirePermissionsBoundary) ? Arn.Policy(c.Partition, c.AccountId, opt.PermissionsBoundary) : null;
-        var name = Naming.RoleName(opt, c, req);
+        var name = Naming.RoleName(c, req);
         var permissions = req.Statements.Count > 0 ? PolicyDocuments.Permissions(req.Statements) : null;
         if (permissions is { Length: > MaxInlineChars }) invalid = $"generated permission policy is {permissions.Length} characters; the limit is {MaxInlineChars}";
         var desc = req.Description ?? $"{MechanismNames.Name(req.Mechanism)} access for {req.Namespace}/{req.ServiceAccount} (managed by {opt.OperatorId})";
@@ -234,6 +234,8 @@ public sealed class AccessEngine(
         var own = owners.Check(role, req, c);
         if (own is Ownership.Foreign or Ownership.OwnedByOtherWorkload)
             return (Empty(), Refuse(ErrorKind.Permanent, "RoleNotOwned", $"IAM role {d.Role.Arn} already exists and is not owned by this request ({own}); the operator will not modify it"));
+        if (role.Exists && d.Role.Arn != prior.RoleArn && role.Tags.GetValueOrDefault(Tags.Uid) != req.Uid)
+            return (Empty(), Refuse(ErrorKind.Conflict, "RoleNameTaken", $"IAM role {d.Role.Arn} already exists and was not created for this resource; choose another roleName"));
 
         var assoc = await bindings.For(req.Mechanism).ReadAsync(c.ClusterName, req.Namespace, req.ServiceAccount, ct);
         if (assoc.Exists && assoc.RoleArn != d.Role.Arn && assoc.RoleArn != prior.RoleArn && !await BindingIsOursAsync(req, c, assoc, ct))
@@ -276,7 +278,7 @@ public sealed class AccessEngine(
             var acct = await account.GetClusterAccountIdAsync(ct);
             var cluster = new ClusterContext(opt.ClusterName, acct, opt.Partition, opt.Region, opt.Environment);
             var req = new AccessRequest { Namespace = i.Namespace, ObjectName = i.ServiceAccount, Uid = i.Uid, ServiceAccount = i.ServiceAccount, RequestedRoleName = i.RequestedRoleName };
-            var roleArn = i.Prior.RoleArn ?? Arn.Role(cluster.Partition, acct, opt.IamPath, Naming.RoleName(opt, cluster, req));
+            var roleArn = i.Prior.RoleArn ?? Arn.Role(cluster.Partition, acct, opt.IamPath, Naming.RoleName(cluster, req));
 
             var b = bindings.For(i.Mechanism);
             var seen = await b.ReadAsync(cluster.ClusterName, i.Namespace, i.ServiceAccount, ct);

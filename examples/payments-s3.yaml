@@ -5,7 +5,7 @@ metadata:
   namespace: payments
 spec:
   serviceAccountName: payments-api
-  # roleName: payments-s3          # optional prefix, the operator appends a stable hash
+  # roleName: payments-s3          # optional exact IAM role name; defaults to <cluster>-<namespace>-<serviceaccount>
   tags:                            # added to the platform team's global tags, on the role and the association
     App: payments
     Env: prod

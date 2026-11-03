@@ -29,7 +29,7 @@ The operator creates an IAM role and binds it to the ServiceAccount, in the AWS 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `serviceAccountName` | string | yes | ServiceAccount in the same namespace that receives the credentials. Changing it moves the association. |
-| `roleName` | string | no | Prefix for the generated role name: lowercase letters, digits and `-`, max 40 characters. A stable hash is always appended. Changing it creates a new role and removes the old one. |
+| `roleName` | string | no | Exact IAM role name: lowercase letters, digits and `-`, max 64 characters. Defaults to `<cluster>-<namespace>-<serviceaccount>`. If a role with that name already exists and was not created for this resource, the request fails with `RoleNameTaken`. Changing it creates a new role and removes the old one. |
 | `tags` | map | no | AWS tags for the role and the association, added to the platform team's global tags. At most 10. Keys use letters, digits and `_ . : / = @ -`. Keys starting with `pio:` or `aws:` are reserved, and keys set globally are rejected. |
 | `managedPolicies` | string[] | no | Managed policy ARNs to attach. Must match the administrator's allow-list. |
 | `statements` | list | no | Permissions for the role (see below). At least one of `statements` or `managedPolicies` is required. |

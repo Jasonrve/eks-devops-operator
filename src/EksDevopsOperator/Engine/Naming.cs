@@ -7,25 +7,21 @@ namespace EksDevopsOperator.Core;
 public static class Naming
 {
     public const int MaxRoleName = 64;
-    static readonly Regex Requested = new(@"^[a-z0-9][a-z0-9-]{0,39}$", RegexOptions.Compiled);
+    static readonly Regex RoleNameFormat = new(@"^[a-z0-9][a-z0-9-]{0,63}$", RegexOptions.Compiled);
     static readonly Regex Unsafe = new(@"[^a-z0-9-]+", RegexOptions.Compiled);
 
-    public static bool IsValidRequestedName(string name) => Requested.IsMatch(name);
-
-    public static string Hash(params string[] parts) => Token(parts)[..8];
+    public static bool IsValidRequestedName(string name) => RoleNameFormat.IsMatch(name);
 
     public static string Token(params string[] parts) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('|', parts)))).ToLowerInvariant();
 
-    /// Deterministic, collision-resistant role name: "{readable}-{hash8}" (<= 64 chars). The hash covers the cluster account, cluster,
-    /// namespace and ServiceAccount, so truncating the readable part cannot cause collisions and a requested name can never
-    /// address another team's role.
-    public static string RoleName(OperatorOptions o, ClusterContext c, AccessRequest r)
+    /// The requested name exactly, or "{cluster}-{namespace}-{serviceaccount}" when none is requested (truncated to 64).
+    /// The engine refuses a name that is already taken, so the default needs no hash.
+    public static string RoleName(ClusterContext c, AccessRequest r)
     {
-        var readable = r.RequestedRoleName ?? $"{o.RolePrefix}-{Sanitize(c.ClusterName)}-{Sanitize(r.Namespace)}-{Sanitize(r.ServiceAccount)}";
-        var hash = Hash(c.AccountId, c.ClusterName, r.Namespace, r.ServiceAccount);
-        var max = MaxRoleName - 1 - hash.Length;
-        return readable[..Math.Min(readable.Length, max)].TrimEnd('-') + "-" + hash;
+        if (r.RequestedRoleName is not null) return r.RequestedRoleName;
+        var name = $"{Sanitize(c.ClusterName)}-{Sanitize(r.Namespace)}-{Sanitize(r.ServiceAccount)}";
+        return name[..Math.Min(name.Length, MaxRoleName)].TrimEnd('-');
     }
 
     public static string Sanitize(string s) => Unsafe.Replace(s.ToLowerInvariant(), "-").Trim('-');

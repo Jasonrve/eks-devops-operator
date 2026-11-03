@@ -148,14 +148,10 @@ public class PureLogicTests
 
     [Fact] public void Role_names_are_stable_short_and_distinct()
     {
-        var o = new OperatorOptions();
         var c = new ClusterContext(new string('c', 40), "111111111111", "aws", "us-east-1", "dev");
-        AccessRequest R(string ns) => new() { Namespace = ns, ObjectName = "x", Uid = "u", ServiceAccount = new string('s', 60) };
-        var n1 = Naming.RoleName(o, c, R(new string('n', 60) + "1"));
-        var n2 = Naming.RoleName(o, c, R(new string('n', 60) + "2"));
-        n1.Length.Should().BeLessOrEqualTo(64);
-        n1.Should().NotBe(n2, "the hash covers the full, untruncated identity");
-        n1.Should().Be(Naming.RoleName(o, c, R(new string('n', 60) + "1")));
+        AccessRequest R(string ns, string? name = null) => new() { Namespace = ns, ObjectName = "x", Uid = "u", ServiceAccount = new string('s', 60), RequestedRoleName = name };
+        Naming.RoleName(c, R("payments")).Should().HaveLength(64).And.StartWith(new string('c', 40) + "-payments-");
+        Naming.RoleName(c, R("payments", "s3-reader")).Should().Be("s3-reader");
     }
 
     [Fact] public void Backoff_grows_and_permanent_errors_wait_longer()

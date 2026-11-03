@@ -61,7 +61,7 @@ docs/       VitePress site
 
 User-facing Helm values: `docs/reference/helm-values.md` and `docs/guide/configuration.md`. Global tags are mounted as JSON at `/config/operator.json` (tag keys can contain characters invalid in env var names); everything else is `Operator__*` / `Aws__*` env vars.
 
-Advanced `OperatorOptions` not exposed as Helm values are settable via `extraEnv` (e.g. `Operator__IamPath`, `Operator__RolePrefix`, `Operator__OperatorId`, `Operator__ProtectedRoleNamePatterns`, `Operator__ConsistencyTimeout`, `Operator__EnforceSessionTagConditions`, `Operator__LeaderElection`, `Operator__WatchNamespace`). **`Operator__IamPath` defaults to `/eks-devops-operator/` and the operator IAM policy in `docs/guide/aws-setup.md` is scoped to that path** — change one and you must change the other or permissions break.
+Advanced `OperatorOptions` not exposed as Helm values are settable via `extraEnv` (e.g. `Operator__IamPath`, `Operator__OperatorId`, `Operator__ProtectedRoleNamePatterns`, `Operator__ConsistencyTimeout`, `Operator__EnforceSessionTagConditions`, `Operator__LeaderElection`, `Operator__WatchNamespace`). **`Operator__IamPath` defaults to `/eks-devops-operator/` and the operator IAM policy in `docs/guide/aws-setup.md` is scoped to that path** — change one and you must change the other or permissions break.
 
 ## Gotchas
 

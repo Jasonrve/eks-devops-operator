@@ -52,7 +52,7 @@ public abstract class AccessSpec
     [Required, Pattern(@"^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$")]
     public string ServiceAccountName { get; set; } = "";
 
-    [Description("Optional role name prefix; the operator appends a stable hash."), Pattern(@"^[a-z0-9][a-z0-9-]{0,39}$")]
+    [Description("Exact IAM role name (lowercase letters, digits and -, max 64). Defaults to <cluster>-<namespace>-<serviceaccount>. A name that is already taken is refused."), Pattern(@"^[a-z0-9][a-z0-9-]{0,63}$")]
     public string? RoleName { get; set; }
 
     [Description("Extra AWS tags for the role (and the Pod Identity association), added to the global tags the platform team configured. Max 10. Keys starting with pio: or aws: are reserved, and keys the global tags already set are rejected.")]

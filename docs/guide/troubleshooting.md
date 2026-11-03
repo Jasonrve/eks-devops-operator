@@ -24,7 +24,9 @@ kubectl -n pio logs deploy/pio | grep <name>           # JSON logs
 **`TagConflict`**: the tag is set globally by the platform team. Use a different key.
 
 **`RoleNotOwned`**: an IAM role with the generated name already exists but was not created by this operator for this workload. The operator will not modify it.
-Rename your `roleName` prefix, or delete the stale role if you are sure it is unused.
+Choose another `roleName`, or delete the stale role if you are sure it is unused.
+
+**`RoleNameTaken`**: a role with the requested `roleName` (or the default `<cluster>-<namespace>-<serviceaccount>`) already exists, and it was not created for this resource. Choose another `roleName`, or delete the existing role if it is no longer used.
 
 **`AssociationNotOwned`**: a Pod Identity association for that ServiceAccount already exists (created by hand, Terraform or another tool). Remove it or use another ServiceAccount.
 

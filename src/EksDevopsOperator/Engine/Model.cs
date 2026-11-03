@@ -77,7 +77,6 @@ public sealed class OperatorOptions
     public string Partition { get; set; } = "aws";
     public string Environment { get; set; } = "dev";
     public string IamPath { get; set; } = "/eks-devops-operator/";
-    public string RolePrefix { get; set; } = "pio";
     public string OperatorId { get; set; } = "eks-devops-operator";
     /// Permissions boundary policy (path + name) attached to every role when a policy requires it. Must exist in the cluster account.
     public string PermissionsBoundary { get; set; } = "/eks-devops-operator/standard-workload";
