@@ -241,11 +241,17 @@ public class DefaultPolicyTests
     [Fact] public void Escalation_passes_only_when_a_policy_names_the_action_and_resource()
     {
         const string role = "arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader";
+        var ctx = new ClusterContext("c1", "111111111111", "aws", "us-east-1", "dev");
+        AccessRequest Request(string resource) => new()
+        {
+            Namespace = "payments", ObjectName = "x", Uid = "u", ServiceAccount = "api",
+            Statements = [new PolicyStatement("S", "Allow", ["sts:AssumeRole"], [resource])],
+        };
         var defaults = new PolicyRule { Name = "default", AllowedActions = ["*"] };
         var grant = new PolicyRule { Name = "grant", AllowedServices = ["sts"], AllowedActions = ["sts:AssumeRole"], AllowedResourceArnPatterns = [role] };
-        new PolicyValidator(new OperatorOptions()).Validate(Req(["sts:AssumeRole"], [role]), [defaults, grant], Ctx).IsValid.Should().BeTrue();
-        new PolicyValidator(new OperatorOptions()).Validate(Req(["sts:AssumeRole"], [role]), [defaults], Ctx).Issues.Should().Contain(i => i.Code == "PrivilegeEscalation");
-        new PolicyValidator(new OperatorOptions()).Validate(Req(["sts:AssumeRole"], ["arn:aws:iam::634107240400:role/other"]), [defaults, grant], Ctx)
+        new PolicyValidator(new OperatorOptions()).Validate(Request(role), [defaults, grant], ctx).IsValid.Should().BeTrue();
+        new PolicyValidator(new OperatorOptions()).Validate(Request(role), [defaults], ctx).Issues.Should().Contain(i => i.Code == "PrivilegeEscalation");
+        new PolicyValidator(new OperatorOptions()).Validate(Request("arn:aws:iam::634107240400:role/other"), [defaults, grant], ctx)
             .Issues.Should().Contain(i => i.Code == "PrivilegeEscalation");
     }
 
