@@ -105,7 +105,7 @@ public class EngineFlociTests(EngineHarness h) : IClassFixture<EngineHarness>
         var r1 = await h.Reconcile(h.Request(ns) with { Generation = 1 });
         var r2 = await h.Reconcile(h.Request(ns) with { Generation = 2, RequestedRoleName = "renamed" }, EngineHarness.Prior(r1, 1));
         r2.Phase.Should().Be(Phase.Ready, r2.Message);
-        r2.RoleArn.Should().NotBe(r1.RoleArn).And.Contain("renamed-");
+        r2.RoleArn.Should().NotBe(r1.RoleArn).And.EndWith("/renamed");
         (await h.Association(ns, "api")).RoleArn.Should().Be(r2.RoleArn);
         (await h.Role(r1.RoleArn!)).Exists.Should().BeFalse("the old role is removed after the association moved");
         Reasons(r2).Should().Contain(["RoleCreated", "AssociationUpdated", "PreviousRoleDeleted"]);
