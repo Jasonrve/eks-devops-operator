@@ -28,7 +28,7 @@ public sealed class EksPodIdentityManager(AwsClients aws) : IBindingManager
         var cur = await ReadAsync(cluster, ns, sa, ct);
         if (!cur.Exists)
         {
-            var token = Naming.Hash(cluster, ns, sa, roleArn); // idempotent retries
+            var token = Naming.Token(cluster, ns, sa, roleArn); // idempotent retries
             var r = await Telemetry.AwsCall("eks", "CreatePodIdentityAssociation", () => eks.CreatePodIdentityAssociationAsync(new CreatePodIdentityAssociationRequest
             {
                 ClusterName = cluster, Namespace = ns, ServiceAccount = sa, RoleArn = roleArn, ClientRequestToken = token, Tags = new Dictionary<string, string>(tags),
