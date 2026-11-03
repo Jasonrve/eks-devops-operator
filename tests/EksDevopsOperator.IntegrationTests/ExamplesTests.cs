@@ -56,7 +56,7 @@ public class ExamplesTests
 
     [Fact] public void The_policy_example_parses_and_scopes_to_its_namespace()
     {
-        var p = KubernetesYaml.Deserialize<V1Alpha1PodIdentityPolicy>(Read("policy.yaml"));
+        var p = KubernetesYaml.Deserialize<V1Alpha1IdentityPolicy>(Read("policy.yaml"));
         var rule = EksDevopsOperator.Kubernetes.PolicyCrSource.ToRule(p);
         rule.Governs("payments").Should().BeTrue();
         rule.Governs("other").Should().BeFalse();

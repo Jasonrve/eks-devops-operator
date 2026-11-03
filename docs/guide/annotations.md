@@ -1,7 +1,7 @@
 # ServiceAccount annotations
 
 A team can ask for access on the ServiceAccount itself, with annotations, instead of writing a `PodIdentityAccess` or `IrsaAccess`. The operator creates that resource for them. It then
-behaves exactly like one written by hand: same guardrails ([`PodIdentityPolicy`](/reference/podidentitypolicy)), same engine, same events.
+behaves exactly like one written by hand: same guardrails ([`IdentityPolicy`](/reference/identitypolicy)), same engine, same events.
 
 ```yaml
 apiVersion: v1
@@ -71,4 +71,4 @@ serviceAccountAnnotations:
   interval: "00:00:30"
 ```
 
-Anyone who can annotate a ServiceAccount can then request access, so combine it with a `PodIdentityPolicy` that limits services, actions and resource ARNs for the namespaces involved.
+Anyone who can annotate a ServiceAccount can then request access, so combine it with an `IdentityPolicy` that limits services, actions and resource ARNs for the namespaces involved.

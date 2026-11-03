@@ -101,7 +101,7 @@ Logs are JSON on stdout, one object per line. Set the level with the chart value
 | Level | What is logged |
 |---|---|
 | **Information** | The startup summary (version, cluster, region, policy namespace, IRSA, tags), the AWS account in use, the policies loaded, **every change made** (same text as the event), phase changes, finalizer added, cleanup start and finish |
-| **Warning** | Requests rejected by the guardrails, ownership conflicts, refusals (`RoleNotOwned` and similar), failures with their kind (Transient, Permanent, Authorization), drift repairs, cleanup that must be retried, no `PodIdentityPolicy` found, an overridden AWS endpoint |
+| **Warning** | Requests rejected by the guardrails, ownership conflicts, refusals (`RoleNotOwned` and similar), failures with their kind (Transient, Permanent, Authorization), drift repairs, cleanup that must be retried, no `IdentityPolicy` found, an overridden AWS endpoint |
 | **Debug** | Routine detail: "in sync", the plan, waiting for AWS to converge, every AWS call with its duration, status writes, retry schedule, full exception details |
 
 A healthy, idle operator logs nothing above Debug. KubeOps itself is set to `Warning` by default (`libraryLogLevel`), because at `Information` it logs a line per reconcile and per watch event; its cache library is always `Warning`. Each line carries the identifiers needed to follow one resource: `uid`, `namespace`, `name`, `serviceAccount`, `mechanism`, `cluster`
@@ -113,7 +113,7 @@ kubectl -n pio logs deploy/eks-devops-operator | jq -c 'select(.Scopes[]?.uid ==
 
 ```text
 ["Information","added finalizer identity.platform.io/finalizer so AWS resources are cleaned up on deletion"]
-["Information","loaded 1 PodIdentityPolicy object(s) from namespace pio: default"]
+["Information","loaded 1 IdentityPolicy object(s) from namespace pio: default"]
 ["Information","RoleCreated: created role arn:aws:iam::111111111111:role/eks-devops-operator/pio-e2e-payments-payments-api-267dc7e3 (role missing)"]
 ["Information","AssociationCreated: created Pod Identity association a-1 for payments/payments-api (binding missing)"]
 ["Information","reconciled in 1204 ms with 3 change(s): role arn:aws:..., binding a-1"]

@@ -53,4 +53,4 @@ jobs:
             "eks-devops-operator-${{ steps.v.outputs.version }}.tgz" \
             charts/eks-devops-operator/crds/identity.platform.io_podidentityaccesses.yaml \
             charts/eks-devops-operator/crds/identity.platform.io_irsaaccesses.yaml \
-            charts/eks-devops-operator/crds/identity.platform.io_podidentitypolicies.yaml
+            charts/eks-devops-operator/crds/identity.platform.io_identitypolicies.yaml

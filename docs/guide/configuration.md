@@ -4,13 +4,13 @@ Three things configure the operator, and **teams control none of them**:
 
 | What | Where | Controlled by |
 |---|---|---|
-| What may be requested (services, actions, resources, ...) | `PodIdentityPolicy` objects **in the operator's namespace** | Platform admins (RBAC on that namespace) |
+| What may be requested (services, actions, resources, ...) | `IdentityPolicy` objects **in the operator's namespace** | Platform admins (RBAC on that namespace) |
 | Tags added to everything | Helm value `tags` | Platform admins |
 | Cluster, boundary, intervals | Helm values | Platform admins |
 
 ## Guardrail policies
 
-Guardrails are [`PodIdentityPolicy`](/reference/podidentitypolicy) objects. The operator reads them **only from its own namespace**; the same kind of object
+Guardrails are [`IdentityPolicy`](/reference/identitypolicy) objects. The operator reads them **only from its own namespace**; the same kind of object
 created in a team namespace is ignored. The Helm chart renders one policy named `default` from the `policy:` values:
 
 ```yaml
@@ -84,5 +84,5 @@ The operator only ever removes keys it applied itself. Tags added by anyone else
 
 `extraEnv` can point the AWS SDK at an emulator: `Aws__ServiceUrl=http://floci:4566`. Leave it unset in production so the SDK uses the
 default credential chain (EKS Pod Identity) and real AWS endpoints. When running the operator outside a cluster, set `Operator__PolicyNamespace` to
-the namespace that holds your `PodIdentityPolicy` objects, and put global tags in a JSON file named by `OPERATOR_CONFIG_FILE`
+the namespace that holds your `IdentityPolicy` objects, and put global tags in a JSON file named by `OPERATOR_CONFIG_FILE`
 (`{"Operator":{"Tags":{"CostCenter":"cc-1"}}}`); the chart does this with a ConfigMap mounted at `/config/operator.json`.

@@ -68,7 +68,7 @@ IRSA is **off by default**, because the operator needs permission to change Serv
    This adds one RBAC rule: `get` and `patch` on `serviceaccounts` (cluster-wide, since a rule cannot be limited to the namespaces teams use). Without `irsa.enabled`, that rule does not exist
    and IRSA requests are rejected with `IrsaDisabled`.
 3. **Add two permissions to the operator's IAM role** (see [AWS setup](/guide/aws-setup)): `eks:DescribeCluster` (to find the issuer) and `iam:GetOpenIDConnectProvider`.
-4. **Decide who may use it.** A [`PodIdentityPolicy`](/reference/podidentitypolicy) controls the mechanisms per namespace: `allowedMechanisms: [PodIdentity]` allows only `PodIdentityAccess`,
+4. **Decide who may use it.** A [`IdentityPolicy`](/reference/identitypolicy) controls the mechanisms per namespace: `allowedMechanisms: [PodIdentity]` allows only `PodIdentityAccess`,
    `[IRSA]` only `IrsaAccess`, and the default `["*"]` allows both.
 
 ## Moving a workload between mechanisms
@@ -89,7 +89,7 @@ Delete one resource and create the other. The old binding and role are cleaned u
 | Reason (in `status` and events) | Meaning | Fix |
 |---|---|---|
 | `IrsaDisabled` | The operator was installed without `irsa.enabled` | Platform team enables it |
-| `MechanismNotAllowed` | No `PodIdentityPolicy` allows IRSA for your namespace | Ask the platform team |
+| `MechanismNotAllowed` | No `IdentityPolicy` allows IRSA for your namespace | Ask the platform team |
 | `OidcProviderMissing` | The cluster's IAM OIDC provider does not exist | Create it once (see above) |
 | `OidcIssuerUnknown` | The cluster reports no OIDC issuer | Enable the cluster's OIDC issuer, or set `irsa.oidcIssuer` |
 | `ServiceAccountNotFound` | The ServiceAccount does not exist yet | Create it; the operator retries |

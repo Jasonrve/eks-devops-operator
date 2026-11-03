@@ -1,14 +1,14 @@
-# PodIdentityPolicy
+# IdentityPolicy
 
-`identity.platform.io/v1alpha1`, kind `PodIdentityPolicy`, namespaced. Short name `pip`.
+`identity.platform.io/v1alpha1`, kind `IdentityPolicy`, namespaced. Short name `pip`.
 
-A PodIdentityPolicy says what teams are allowed to request. **The operator reads these objects only from its own namespace** (the namespace it is
+A IdentityPolicy says what teams are allowed to request. **The operator reads these objects only from its own namespace** (the namespace it is
 deployed in, for example `pio`). A policy created in any other namespace is ignored, so teams cannot write or widen their own guardrails.
 Give only platform administrators write access to the operator namespace.
 
 ```yaml
 apiVersion: identity.platform.io/v1alpha1
-kind: PodIdentityPolicy
+kind: IdentityPolicy
 metadata:
   name: payments
   namespace: pio              # the operator's namespace

@@ -48,7 +48,7 @@ public sealed record ValidationResult(IReadOnlyList<ValidationIssue> Issues)
 
 public interface IPolicyValidator
 {
-    /// matching = the PodIdentityPolicy rules that govern the request's namespace. None means deny.
+    /// matching = the IdentityPolicy rules that govern the request's namespace. None means deny.
     ValidationResult Validate(AccessRequest request, IReadOnlyList<PolicyRule> matching, ClusterContext cluster);
 }
 

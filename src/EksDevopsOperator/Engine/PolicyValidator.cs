@@ -24,8 +24,8 @@ public sealed partial class PolicyValidator(OperatorOptions options) : IPolicyVa
 
         if (!DnsLabel.IsMatch(r.Namespace) || !DnsLabel.IsMatch(r.ServiceAccount.Replace('.', '-'))) Fail("InvalidIdentity", "namespace/serviceAccount are not valid Kubernetes names");
 
-        // deny by default: at least one PodIdentityPolicy must govern the namespace, and every governing policy must accept the request
-        if (matching.Count == 0) Fail("NamespaceNotAuthorized", $"no PodIdentityPolicy applies to namespace '{r.Namespace}'");
+        // deny by default: at least one IdentityPolicy must govern the namespace, and every governing policy must accept the request
+        if (matching.Count == 0) Fail("NamespaceNotAuthorized", $"no IdentityPolicy applies to namespace '{r.Namespace}'");
         foreach (var p in matching) ValidateAgainstPolicy(r, p, cluster, Fail);
         ValidateCommon(r, Fail);
         return new ValidationResult(issues);

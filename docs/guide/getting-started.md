@@ -39,10 +39,10 @@ sh local/seed-floci.sh
 ```sh
 for f in charts/eks-devops-operator/crds/*.yaml; do docker exec -i k3s kubectl apply -f - < $f; done
 
-docker exec k3s kubectl create namespace pio     # the operator namespace: the only place PodIdentityPolicy objects are read
+docker exec k3s kubectl create namespace pio     # the operator namespace: the only place IdentityPolicy objects are read
 docker exec -i k3s kubectl apply -f - <<'EOF'
 apiVersion: identity.platform.io/v1alpha1
-kind: PodIdentityPolicy
+kind: IdentityPolicy
 metadata: {name: default, namespace: pio}
 spec:
   allowedServices: [s3]
@@ -57,7 +57,7 @@ echo '{"Operator":{"Tags":{"CostCenter":"cc-1234"}}}' > /tmp/pio-operator.json
 export KUBECONFIG=/tmp/pio-kubeconfig OPERATOR_CONFIG_FILE=/tmp/pio-operator.json
 export AWS_ACCESS_KEY_ID=111111111111 AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1   # Floci: the key id selects the account
 export Aws__ServiceUrl=http://localhost:4566 Operator__ClusterName=e2e Operator__LeaderElection=false
-export Operator__PolicyNamespace=pio          # where PodIdentityPolicy objects are read (in a cluster: the operator pod's own namespace)
+export Operator__PolicyNamespace=pio          # where IdentityPolicy objects are read (in a cluster: the operator pod's own namespace)
 
 dotnet run --project src/EksDevopsOperator
 ```

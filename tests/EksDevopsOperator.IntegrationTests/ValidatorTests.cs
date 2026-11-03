@@ -184,16 +184,16 @@ public class PolicyCrdTests
     [Fact] public async Task Policies_are_read_only_from_the_operator_namespace()
     {
         var client = Substitute.For<KubeOps.KubernetesClient.IKubernetesClient>();
-        V1Alpha1PodIdentityPolicy P(string ns, string name) => new() { Metadata = new() { Name = name, NamespaceProperty = ns }, Spec = new() { AllowedServices = ["s3"] } };
+        V1Alpha1IdentityPolicy P(string ns, string name) => new() { Metadata = new() { Name = name, NamespaceProperty = ns }, Spec = new() { AllowedServices = ["s3"] } };
         // even if a team-namespace object were ever returned, it must be ignored
-        client.ListAsync<V1Alpha1PodIdentityPolicy>("pio", Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<V1Alpha1PodIdentityPolicy> { P("pio", "admin-policy"), P("team-a", "sneaky") });
+        client.ListAsync<V1Alpha1IdentityPolicy>("pio", Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new List<V1Alpha1IdentityPolicy> { P("pio", "admin-policy"), P("team-a", "sneaky") });
         var source = new PolicyCrSource(client, new OperatorOptions { PolicyNamespace = "pio" }, TimeProvider.System, NullLogger<PolicyCrSource>.Instance);
 
         var rules = await source.ListAsync(default);
 
         rules.Select(r => r.Name).Should().Equal("admin-policy");
-        await client.DidNotReceive().ListAsync<V1Alpha1PodIdentityPolicy>(Arg.Is<string?>(n => n != "pio"), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        await client.DidNotReceive().ListAsync<V1Alpha1IdentityPolicy>(Arg.Is<string?>(n => n != "pio"), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact] public void A_policy_governs_listed_namespaces_or_all_when_empty()
@@ -243,7 +243,7 @@ public class DefaultPolicyTests
 
     [Fact] public void The_chart_default_policy_allows_everything_via_star()
     {
-        var spec = new EksDevopsOperator.Kubernetes.PodIdentityPolicySpec();
+        var spec = new EksDevopsOperator.Kubernetes.IdentityPolicySpec();
         spec.AllowedServices.Should().Equal("*");
         spec.AllowedActions.Should().Equal("*");
     }

@@ -5,7 +5,7 @@ A rejected request has `phase: Invalid`; `status.message` lists every problem as
 | Code | Meaning | Fix |
 |---|---|---|
 | `InvalidIdentity` | Namespace or ServiceAccount is not a valid Kubernetes name | Use a valid name |
-| `NamespaceNotAuthorized` | No `PodIdentityPolicy` in the operator namespace governs your namespace | Ask the platform team to add the namespace to a policy |
+| `NamespaceNotAuthorized` | No `IdentityPolicy` in the operator namespace governs your namespace | Ask the platform team to add the namespace to a policy |
 | `MechanismNotAllowed` | No policy allows that kind (`PodIdentity` for `PodIdentityAccess`, `IRSA` for `IrsaAccess`) for the namespace | Use an allowed kind or ask the platform team |
 | `IrsaDisabled` | IRSA is not enabled on this operator | Platform team sets `irsa.enabled` |
 | `DeletionPolicyNotAllowed` | That `deletionPolicy` is not allowed | Use an allowed value |

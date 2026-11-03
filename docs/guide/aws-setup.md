@@ -3,7 +3,7 @@
 Two kinds of IAM access exist, and they are never mixed:
 
 - **Operator access** (this page): what the operator itself may do. Tight and administered by the platform team.
-- **Workload access**: what an application is granted. It comes from a `PodIdentityAccess` and is checked against your `PodIdentityPolicy` guardrails.
+- **Workload access**: what an application is granted. It comes from a `PodIdentityAccess` and is checked against your `IdentityPolicy` guardrails.
 
 Everything is created in the **AWS account and EKS cluster the operator runs in**. You need to set up two things once, on a cluster that has the
 **EKS Pod Identity Agent** add-on (`aws eks create-addon --cluster-name CLUSTER_NAME --addon-name eks-pod-identity-agent`).
@@ -80,7 +80,7 @@ Permissions (replace `ACCOUNT`, `CLUSTER_NAME` and `REGION`):
 ```
 
 ::: tip If you allow managed policies
-`iam:AttachRolePolicy` can attach any policy to roles under the path. If your `PodIdentityPolicy` allows `allowedManagedPolicyArns`, add a condition on `iam:PolicyARN` that lists
+`iam:AttachRolePolicy` can attach any policy to roles under the path. If your `IdentityPolicy` allows `allowedManagedPolicyArns`, add a condition on `iam:PolicyARN` that lists
 only those ARNs, so the IAM permission matches the operator guardrail. Without managed policies, you can drop `AttachRolePolicy` and `DetachRolePolicy`.
 :::
 
@@ -134,7 +134,7 @@ spec:
 }
 ```
 
-Use `allowedResourceArnPatterns` in the `PodIdentityPolicy` to decide which outside resources teams may name.
+Use `allowedResourceArnPatterns` in the `IdentityPolicy` to decide which outside resources teams may name.
 The role name is in `status.roleArn`. It is stable, so the bucket policy keeps working across reconciles.
 
 ## Verify

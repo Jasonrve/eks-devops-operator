@@ -2,7 +2,7 @@ eks-devops-operator installed for cluster "{{ .Values.cluster.name }}".
 
 1. The operator ServiceAccount "{{ .Values.serviceAccount.name }}" in namespace "{{ .Release.Namespace }}" needs an
    EKS Pod Identity association to the operator IAM role (see the docs: AWS setup). Until then /health/ready stays unhealthy.
-2. Guardrails are PodIdentityPolicy objects in THIS namespace ({{ .Release.Namespace }}). Policies anywhere else are ignored.
+2. Guardrails are IdentityPolicy objects in THIS namespace ({{ .Release.Namespace }}). Policies anywhere else are ignored.
 {{- if .Values.policy.create }}
    The chart created one named "default". With no matching policy every request is rejected.
 {{- else }}

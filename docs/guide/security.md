@@ -5,7 +5,7 @@
 | Actor | Can | Cannot |
 |---|---|---|
 | Application team | Create a `PodIdentityAccess` in their namespace | Supply trust policy JSON, pick the role name outright, exceed the guardrails, override global tags |
-| Platform admin | Write `PodIdentityPolicy` objects in the operator namespace; set global tags, the boundary and the cluster identity (Helm values); create IAM roles | |
+| Platform admin | Write `IdentityPolicy` objects in the operator namespace; set global tags, the boundary and the cluster identity (Helm values); create IAM roles | |
 | Operator | Create, update and delete roles it owns under `/eks-devops-operator/` in its own account | Anything outside that path, or any role it did not create |
 
 Use Kubernetes RBAC to give teams `create/get/list/update/delete` on `podidentityaccesses` in their own namespaces only, and no access to the operator namespace.
@@ -13,7 +13,7 @@ Use Kubernetes RBAC to give teams `create/get/list/update/delete` on `podidentit
 ## Controls in the code
 
 1. **Validate before any AWS write.** Invalid requests are rejected with a precise reason and `phase: Invalid`. Every reconcile re-validates, so editing a resource cannot bypass a check. If you tighten the guardrails later, existing resources become `Invalid` at their next reconcile and stop being changed. Their AWS resources are left as they are, not deleted.
-2. **Guardrails live where teams cannot write.** `PodIdentityPolicy` objects are read only from the operator's own namespace (enforced in code and by a namespaced Role). A policy created in a team namespace is ignored. Restrict write access to the operator namespace to platform admins.
+2. **Guardrails live where teams cannot write.** `IdentityPolicy` objects are read only from the operator's own namespace (enforced in code and by a namespaced Role). A policy created in a team namespace is ignored. Restrict write access to the operator namespace to platform admins.
 3. **Deny by default.** No policy governing the namespace, or an unmatched action or resource, means rejection.
 4. **No role-name hijacking.** A requested `roleName` must be lowercase and at most 64 characters, and protected patterns (`*Admin*`, `aws-*`, `eks-*`, ...) are refused.
    A name already held by another role is refused with `RoleNameTaken`, so one workload cannot take over another's role.

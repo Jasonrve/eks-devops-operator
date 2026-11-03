@@ -40,7 +40,7 @@ spec:
                 - Retain
                 type: string
               managedPolicies:
-                description: IAM managed policy ARNs to attach (must be on the PodIdentityPolicy allow-list).
+                description: IAM managed policy ARNs to attach (must be on the IdentityPolicy allow-list).
                 items:
                   type: string
                 type: array

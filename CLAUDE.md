@@ -4,7 +4,7 @@ Guidance for AI assistants and new contributors working in this repo. For user-f
 
 ## What this is
 
-A Kubernetes operator for Amazon EKS (C# / .NET 10, [KubeOps](https://dotnet.github.io/dotnet-operator-sdk/) + AWS SDK for .NET). A team applies one custom resource (`PodIdentityAccess` or `IrsaAccess`); the operator creates the IAM role and the binding (an EKS Pod Identity association, or the ServiceAccount `role-arn` annotation for IRSA) that deliver AWS credentials. Platform admins constrain requests with `PodIdentityPolicy` guardrails. No database: Kubernetes holds desired state, AWS holds actual state.
+A Kubernetes operator for Amazon EKS (C# / .NET 10, [KubeOps](https://dotnet.github.io/dotnet-operator-sdk/) + AWS SDK for .NET). A team applies one custom resource (`PodIdentityAccess` or `IrsaAccess`); the operator creates the IAM role and the binding (an EKS Pod Identity association, or the ServiceAccount `role-arn` annotation for IRSA) that deliver AWS credentials. Platform admins constrain requests with `IdentityPolicy` guardrails. No database: Kubernetes holds desired state, AWS holds actual state.
 
 ## Build, test, run
 
@@ -46,7 +46,7 @@ docs/       VitePress site
 ## Invariants — don't break these
 
 1. **Validate before any AWS write.** `PolicyValidator` runs on every reconcile; nothing in AWS changes for an invalid request. A permissions boundary is an extra guardrail, never a substitute for validation.
-2. **Deny by default.** A request needs a `PodIdentityPolicy` that governs its namespace and must satisfy *every* governing policy. No policy ⇒ nothing is allowed.
+2. **Deny by default.** A request needs an `IdentityPolicy` that governs its namespace and must satisfy *every* governing policy. No policy ⇒ nothing is allowed.
 3. **Only touch what we own.** Before mutating or deleting any IAM role or binding, `ResourceOwnershipService.Check` must confirm the ownership tags (`pio:operator`, `pio:cluster`, `pio:namespace`, `pio:service-account`) and IAM path. Never modify a role the operator didn't create.
 4. **Ready means verified.** The engine reads AWS back and re-plans until converged; `Ready` is never reported on the strength of a create call alone (`Engine/AccessEngine.cs`).
 5. **Idempotent steps.** A crash at any point must re-plan safely from real AWS state on the next reconcile.

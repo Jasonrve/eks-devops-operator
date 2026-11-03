@@ -43,7 +43,7 @@ public sealed record ClusterContext(string ClusterName, string AccountId, string
     public string ClusterArn => $"arn:{Partition}:eks:{Region}:{AccountId}:cluster/{ClusterName}";
 }
 
-// ----- administrator guardrails (PodIdentityPolicy objects in the operator namespace) -----
+// ----- administrator guardrails (IdentityPolicy objects in the operator namespace) -----
 
 public sealed record PolicyRule
 {
@@ -82,7 +82,7 @@ public sealed class OperatorOptions
     public string PermissionsBoundary { get; set; } = "/eks-devops-operator/standard-workload";
     /// Tags added to every AWS resource the operator creates (roles and associations). Admin controlled.
     public Dictionary<string, string> Tags { get; set; } = new();
-    /// Namespace the operator runs in. PodIdentityPolicy objects are read ONLY from here, so teams cannot create their own guardrails.
+    /// Namespace the operator runs in. IdentityPolicy objects are read ONLY from here, so teams cannot create their own guardrails.
     public string PolicyNamespace { get; set; } = "";
     /// Port of the probe and metrics endpoint (/health/live, /health/ready, /metrics).
     public int HttpPort { get; set; } = 8080;

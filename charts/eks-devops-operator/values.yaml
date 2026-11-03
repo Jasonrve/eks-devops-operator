@@ -20,13 +20,13 @@ serviceAccount:
 # -- IRSA (IAM Roles for Service Accounts) as an alternative to EKS Pod Identity. Off by default, because it lets the operator set ONE
 # annotation (eks.amazonaws.com/role-arn) on ServiceAccounts, which needs the extra RBAC rule (get and patch on serviceaccounts) that is
 # added only when this is on. It also needs the cluster's IAM OIDC provider (a one-time setup), and eks:DescribeCluster plus
-# iam:GetOpenIDConnectProvider for the operator role. A PodIdentityPolicy still decides which teams may use it (policy.allowedMechanisms).
+# iam:GetOpenIDConnectProvider for the operator role. A IdentityPolicy still decides which teams may use it (policy.allowedMechanisms).
 irsa:
   enabled: false
   oidcIssuer: ""             # empty = discovered from the cluster; or set e.g. oidc.eks.eu-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
 
 # -- ServiceAccount annotations: a ServiceAccount annotated identity.platform.io/enabled=true gets a PodIdentityAccess or IrsaAccess created for it
-# (a policy template plus resource ARNs; see docs/guide/annotations.md). The generated resource passes the same PodIdentityPolicy guardrails.
+# (a policy template plus resource ARNs; see docs/guide/annotations.md). The generated resource passes the same IdentityPolicy guardrails.
 # Opt-in because it needs RBAC to list ServiceAccounts and create and delete the two access kinds in every namespace.
 serviceAccountAnnotations:
   enabled: false
@@ -41,8 +41,8 @@ tags: {}
 
 environment: dev            # recorded in the pio:environment tag
 
-# -- The default guardrail, rendered as a PodIdentityPolicy named "default" in the release namespace (deny by default).
-# Add more with `kubectl apply` of PodIdentityPolicy objects in that same namespace. Objects in any other namespace are ignored.
+# -- The default guardrail, rendered as an IdentityPolicy named "default" in the release namespace (deny by default).
+# Add more with `kubectl apply` of IdentityPolicy objects in that same namespace. Objects in any other namespace are ignored.
 # A request must satisfy EVERY policy that governs its namespace, and is denied if none does.
 policy:
   create: true

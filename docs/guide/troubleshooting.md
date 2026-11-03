@@ -19,7 +19,7 @@ kubectl -n pio logs deploy/pio | grep <name>           # JSON logs
 
 ## Common causes
 
-**`NamespaceNotAuthorized`**: no `PodIdentityPolicy` in the operator namespace governs your namespace. Ask the platform team. Policies created anywhere else are ignored by design.
+**`NamespaceNotAuthorized`**: no `IdentityPolicy` in the operator namespace governs your namespace. Ask the platform team. Policies created anywhere else are ignored by design.
 
 **`TagConflict`**: the tag is set globally by the platform team. Use a different key.
 

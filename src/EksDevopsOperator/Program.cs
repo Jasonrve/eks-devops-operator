@@ -16,7 +16,7 @@ using OpenTelemetry.Trace;
 if (args is ["generate-crds", var crdDir])
 {
     Directory.CreateDirectory(crdDir);
-    var types = new[] { typeof(V1Alpha1PodIdentityAccess), typeof(V1Alpha1IrsaAccess), typeof(V1Alpha1PodIdentityPolicy) };
+    var types = new[] { typeof(V1Alpha1PodIdentityAccess), typeof(V1Alpha1IrsaAccess), typeof(V1Alpha1IdentityPolicy) };
     foreach (var crd in new KubeOps.Operator.Crds.KubeOpsCrdResourceFactory().CreateCustomResourceDefinitions(types))
         File.WriteAllText(Path.Combine(crdDir, $"{crd.Spec.Group}_{crd.Spec.Names.Plural}.yaml"), k8s.KubernetesYaml.Serialize(crd));
     return;
@@ -31,7 +31,7 @@ var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings {
 builder.Configuration.AddJsonFile(Environment.GetEnvironmentVariable("OPERATOR_CONFIG_FILE") ?? "/config/operator.json", optional: true, reloadOnChange: false);
 var opt = builder.Configuration.GetSection("Operator").Get<OperatorOptions>() ?? new OperatorOptions();
 if (string.IsNullOrWhiteSpace(opt.ClusterName)) throw new InvalidOperationException("Operator:ClusterName (env Operator__ClusterName) is required");
-// PodIdentityPolicy objects are read only from this namespace: the operator's own (POD_NAMESPACE via the downward API, or the mounted service account namespace).
+// IdentityPolicy objects are read only from this namespace: the operator's own (POD_NAMESPACE via the downward API, or the mounted service account namespace).
 if (string.IsNullOrWhiteSpace(opt.PolicyNamespace))
     opt.PolicyNamespace = Environment.GetEnvironmentVariable("POD_NAMESPACE")
         ?? (File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/namespace") ? File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/namespace").Trim() : "");

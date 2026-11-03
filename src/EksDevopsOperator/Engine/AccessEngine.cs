@@ -96,7 +96,7 @@ public sealed class AccessEngine(
         var clusterAccount = await account.GetClusterAccountIdAsync(ct);
         var cluster = new ClusterContext(opt.ClusterName, clusterAccount, opt.Partition, opt.Region, opt.Environment);
         var matching = (await policySource.ListAsync(ct)).Where(p => p.Governs(req.Namespace)).ToList();
-        log.LogDebug("{Count} PodIdentityPolicy object(s) govern namespace {Namespace}", matching.Count, req.Namespace);
+        log.LogDebug("{Count} IdentityPolicy object(s) govern namespace {Namespace}", matching.Count, req.Namespace);
 
         // 1. validation: nothing below this line runs (and nothing in AWS changes) for an invalid request
         var v = validator.Validate(req, matching, cluster);
@@ -106,7 +106,7 @@ public sealed class AccessEngine(
             return new ReconcileResult(Phase.Invalid, [new("Validated", false, v.Issues[0].Code, v.Summary), new("Ready", false, "ValidationFailed", v.Summary)],
                 Error: ErrorKind.Permanent, Message: v.Summary);
         }
-        var validated = new Condition("Validated", true, "PolicyAccepted", "request satisfies every PodIdentityPolicy that governs the namespace");
+        var validated = new Condition("Validated", true, "PolicyAccepted", "request satisfies every IdentityPolicy that governs the namespace");
 
         // 2. ownership arbitration for the (namespace, ServiceAccount) pair
         var clash = await conflicts.FindConflictsAsync(req, ct);

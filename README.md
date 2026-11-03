@@ -49,7 +49,7 @@ spec:
 ```mermaid
 flowchart LR
     T[Team applies<br/>PodIdentityAccess] --> O[Operator]
-    P[PodIdentityPolicy<br/>operator namespace only] -->|guardrails| O
+    P[IdentityPolicy<br/>operator namespace only] -->|guardrails| O
     O -->|validate| O
     subgraph A[AWS account and EKS cluster of the operator]
       R[IAM role<br/>permissions + boundary + tags<br/>trusts Pod Identity only]
@@ -69,7 +69,7 @@ Resources in other AWS accounts work too: name their ARNs, and let that account'
 - **Request access with annotations.** Annotate a ServiceAccount with a policy template and resource ARNs and the operator creates the resource for it, through the same guardrails. See [annotations](docs/guide/annotations.md).
 - **One resource, two outcomes.** An IAM role and a Pod Identity association, created in the right order and verified by reading AWS back. `Ready` is never reported on the strength of a create call.
 - **Guardrails before AWS.** Allowed services, actions, resource ARN patterns, no wildcards, no privilege-escalation actions. A rejected request changes nothing in AWS.
-- **Policies teams cannot touch.** Guardrails are `PodIdentityPolicy` objects that the operator reads only from its own namespace. A look-alike policy in a team namespace is ignored.
+- **Policies teams cannot touch.** Guardrails are `IdentityPolicy` objects that the operator reads only from its own namespace. A look-alike policy in a team namespace is ignored.
 - **Tags on everything.** Global tags from the platform team plus per-request tags, on the role and the association. Removed tags are removed; tags added by anyone else are left alone.
 - **Strict trust policy.** Only EKS Pod Identity, only this cluster, namespace and ServiceAccount. No account root, no wildcards.
 - **Safe by ownership.** Roles and associations are tagged. The operator never modifies or deletes anything it did not create.
@@ -106,7 +106,7 @@ helm install pio oci://ghcr.io/jasonrve/charts/eks-devops-operator --version 0.1
 environment: prod
 tags:                 # added to every role and association
   CostCenter: cc-1234
-policy:               # becomes a PodIdentityPolicy in the operator namespace
+policy:               # becomes an IdentityPolicy in the operator namespace
   allowedServices: [s3]
   allowedActions: [s3:GetObject, s3:ListBucket]
   allowedResourceArnPatterns: ["arn:aws:s3:::payments-*"]

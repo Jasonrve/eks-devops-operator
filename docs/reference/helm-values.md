@@ -19,7 +19,7 @@ The chart is `charts/eks-devops-operator`. Defaults are in its `values.yaml`.
 | `irsa.oidcIssuer` | empty | OIDC issuer of the cluster. Empty = discovered with `eks:DescribeCluster`. |
 | `policy.allowedMechanisms` | `["*"]` | Mechanisms the default policy allows: `PodIdentity`, `IRSA`. |
 | `tags` | `{}` | Tags added to every role and association. Max 10; keys use letters, digits and `_ . : / = @ -`. Changing them updates existing resources. |
-| `policy.create` | `true` | Render the `default` PodIdentityPolicy in the release namespace. The operator reads policies only from that namespace. |
+| `policy.create` | `true` | Render the `default` IdentityPolicy in the release namespace. The operator reads policies only from that namespace. |
 | `policy.namespaces` | `[]` (all) | Namespaces the default policy governs |
 | `policy.allowedServices` | `["*"]` | IAM service prefixes allowed. `"*"` = every service, `[]` = none |
 | `policy.allowedActions` | `["*"]` | Action globs teams may use. `"*"` = every action, `[]` = none |

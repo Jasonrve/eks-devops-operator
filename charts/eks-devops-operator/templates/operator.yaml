@@ -48,7 +48,7 @@ roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: {{ .Rele
 subjects:
   - {kind: ServiceAccount, name: {{ .Values.serviceAccount.name }}, namespace: {{ .Release.Namespace }}}
 ---
-# PodIdentityPolicy objects are read only from this namespace (the operator's own).
+# IdentityPolicy objects are read only from this namespace (the operator's own).
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -57,7 +57,7 @@ metadata:
   labels: {{ include "pio.labels" . | nindent 4 }}
 rules:
   - apiGroups: [identity.platform.io]
-    resources: [podidentitypolicies]
+    resources: [identitypolicies]
     verbs: [get, list, watch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1

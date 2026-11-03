@@ -19,7 +19,7 @@ sequenceDiagram
 
     Team->>K8s: apply PodIdentityAccess
     K8s-->>Op: watch event
-    Op->>K8s: read PodIdentityPolicy (operator namespace only)
+    Op->>K8s: read IdentityPolicy (operator namespace only)
     Op->>Op: validate against guardrails (no AWS calls yet)
     Op->>AWS: GetCallerIdentity (which account am I in?)
     Op->>AWS: create IAM role (trust = Pod Identity only, boundary, tags) + permissions policy

@@ -44,7 +44,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'PodIdentityAccess', link: '/reference/podidentityaccess' },
           { text: 'IrsaAccess', link: '/reference/irsaaccess' },
-          { text: 'PodIdentityPolicy', link: '/reference/podidentitypolicy' },
+          { text: 'IdentityPolicy', link: '/reference/identitypolicy' },
           { text: 'Helm values', link: '/reference/helm-values' },
           { text: 'Validation errors', link: '/reference/validation-errors' },
         ],

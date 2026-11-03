@@ -1,16 +1,16 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: podidentitypolicies.identity.platform.io
+  name: identitypolicies.identity.platform.io
 spec:
   group: identity.platform.io
   names:
-    kind: PodIdentityPolicy
-    listKind: PodIdentityPolicyList
-    plural: podidentitypolicies
+    kind: IdentityPolicy
+    listKind: IdentityPolicyList
+    plural: identitypolicies
     shortNames:
     - pip
-    singular: podidentitypolicy
+    singular: identitypolicy
   scope: Namespaced
   versions:
   - name: v1alpha1

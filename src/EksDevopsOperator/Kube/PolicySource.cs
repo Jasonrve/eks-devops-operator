@@ -5,7 +5,7 @@ using EksDevopsOperator.Core;
 
 namespace EksDevopsOperator.Kubernetes;
 
-/// Reads PodIdentityPolicy objects from the operator's own namespace only (never from team namespaces).
+/// Reads IdentityPolicy objects from the operator's own namespace only (never from team namespaces).
 public sealed class PolicyCrSource(IKubernetesClient client, OperatorOptions opt, TimeProvider time, ILogger<PolicyCrSource> log) : IPolicySource
 {
     static readonly TimeSpan Ttl = TimeSpan.FromSeconds(5);
@@ -20,7 +20,7 @@ public sealed class PolicyCrSource(IKubernetesClient client, OperatorOptions opt
         try
         {
             if (_cache is { } c2 && time.GetElapsedTime(c2.At) < Ttl) return c2.Rules;
-            var items = await client.ListAsync<V1Alpha1PodIdentityPolicy>(opt.PolicyNamespace, null, null, ct);
+            var items = await client.ListAsync<V1Alpha1IdentityPolicy>(opt.PolicyNamespace, null, null, ct);
             var rules = items
                 .Where(p => p.Namespace() == opt.PolicyNamespace && p.Metadata.DeletionTimestamp is null) // defense in depth: ignore anything from another namespace
                 .Select(ToRule).ToList();
@@ -29,15 +29,15 @@ public sealed class PolicyCrSource(IKubernetesClient client, OperatorOptions opt
             if (names != _lastNames) // only when the set of policies changes, so the log is not repeated every few seconds
             {
                 _lastNames = names;
-                if (rules.Count == 0) log.LogWarning("no PodIdentityPolicy objects in namespace {Namespace}: every request is rejected until one is created there", opt.PolicyNamespace);
-                else log.LogInformation("loaded {Count} PodIdentityPolicy object(s) from namespace {Namespace}: {Names}", rules.Count, opt.PolicyNamespace, names);
+                if (rules.Count == 0) log.LogWarning("no IdentityPolicy objects in namespace {Namespace}: every request is rejected until one is created there", opt.PolicyNamespace);
+                else log.LogInformation("loaded {Count} IdentityPolicy object(s) from namespace {Namespace}: {Names}", rules.Count, opt.PolicyNamespace, names);
             }
             return rules;
         }
         finally { _gate.Release(); }
     }
 
-    public static PolicyRule ToRule(V1Alpha1PodIdentityPolicy p) => new()
+    public static PolicyRule ToRule(V1Alpha1IdentityPolicy p) => new()
     {
         Name = p.Name(), Namespaces = p.Spec.Namespaces, AllowedMechanisms = p.Spec.AllowedMechanisms, AllowedServices = p.Spec.AllowedServices,
         AllowedActions = p.Spec.AllowedActions, DeniedActions = p.Spec.DeniedActions, AllowedResourceArnPatterns = p.Spec.AllowedResourceArnPatterns,

@@ -36,7 +36,7 @@ Pods using the `payments-api` ServiceAccount then get the role's credentials thr
 ## Why use it
 
 - Teams never need IAM permissions.
-- Platform admins set the guardrails once, as `PodIdentityPolicy` objects that only they can write. Every request is checked **before** anything is written to AWS.
+- Platform admins set the guardrails once, as `IdentityPolicy` objects that only they can write. Every request is checked **before** anything is written to AWS.
 - The operator only edits roles it created. It will not take over or delete anything else.
 - Drift is repaired: edited trust policies, removed policies, deleted roles and deleted associations come back.
 - Every AWS change is recorded as a Kubernetes event, logs follow one resource from request to cleanup, and tags are managed for you.

@@ -58,7 +58,7 @@ public abstract class AccessSpec
     [Description("Extra AWS tags for the role (and the Pod Identity association), added to the global tags the platform team configured. Max 10. Keys starting with pio: or aws: are reserved, and keys the global tags already set are rejected.")]
     public Dictionary<string, string> Tags { get; set; } = new();
 
-    [Description("IAM managed policy ARNs to attach (must be on the PodIdentityPolicy allow-list).")]
+    [Description("IAM managed policy ARNs to attach (must be on the IdentityPolicy allow-list).")]
     public List<string> ManagedPolicies { get; set; } = [];
 
     public List<StatementSpec> Statements { get; set; } = [];
@@ -95,13 +95,13 @@ public sealed class ConditionStatus
 
 /// Guardrails for what teams may request. Only objects in the OPERATOR'S OWN namespace are read, so team members who
 /// can create resources in their own namespaces cannot widen what is allowed. Protect that namespace with RBAC.
-[KubernetesEntity(Group = Api.Group, ApiVersion = Api.Version, Kind = "PodIdentityPolicy", PluralName = "podidentitypolicies")]
+[KubernetesEntity(Group = Api.Group, ApiVersion = Api.Version, Kind = "IdentityPolicy", PluralName = "identitypolicies")]
 [KubernetesEntityShortNames("pip")]
-public sealed class V1Alpha1PodIdentityPolicy : CustomKubernetesEntity<PodIdentityPolicySpec>
+public sealed class V1Alpha1IdentityPolicy : CustomKubernetesEntity<IdentityPolicySpec>
 {
 }
 
-public sealed class PodIdentityPolicySpec
+public sealed class IdentityPolicySpec
 {
     [Description("Namespaces this policy governs. Empty = all namespaces. A request must satisfy every policy that governs its namespace, and is denied if none does.")]
     public List<string> Namespaces { get; set; } = [];

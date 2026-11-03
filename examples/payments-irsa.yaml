@@ -2,7 +2,7 @@
 #
 # The operator creates an IAM role that trusts the cluster's OIDC provider for exactly this ServiceAccount, and sets the
 # eks.amazonaws.com/role-arn annotation on it. Requirements (platform team): irsa.enabled=true in the Helm chart, the cluster's
-# IAM OIDC provider, and a PodIdentityPolicy whose allowedMechanisms includes IRSA (the default "*" does).
+# IAM OIDC provider, and an IdentityPolicy whose allowedMechanisms includes IRSA (the default "*" does).
 # See docs/guide/irsa.md.
 apiVersion: identity.platform.io/v1alpha1
 kind: IrsaAccess
