@@ -1,0 +1,19 @@
+# A friendly role name, and Retain: when this resource is deleted the association is removed but the role is kept.
+# The role is created exactly as roleName. If a role with that name exists and was not created for this resource, the request
+# fails with RoleNameTaken and nothing is changed. The default policy allows Retain (see the chart's policy.allowedDeletionPolicies).
+apiVersion: identity.platform.io/v1alpha1
+kind: PodIdentityAccess
+metadata:
+  name: payments-reports-reader
+  namespace: payments
+spec:
+  serviceAccountName: payments-reports
+  roleName: payments-reports-reader
+  tags:
+    App: payments
+    Team: finance
+  statements:
+    - sid: ReadReports
+      actions: [s3:GetObject, s3:ListBucket]
+      resources: [arn:aws:s3:::payments-reports, arn:aws:s3:::payments-reports/*]
+  deletionPolicy: Retain

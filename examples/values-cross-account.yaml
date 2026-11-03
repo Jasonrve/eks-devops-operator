@@ -1,0 +1,22 @@
+# Helm values for the cross-account grant. Use with:
+#   helm upgrade eks-devops-operator charts/eks-devops-operator -n eks-devops-operator --reuse-values -f examples/values-cross-account.yaml
+#
+# Option 1 (below): one namespace, one role. Option 2: every namespace, one role. Option 3: every namespace, every account and role.
+# Only one of these may be active; delete the others.
+crossAccountPolicy:
+  # Option 1: only namespace payments may assume this role
+  namespaces: [payments]
+  roleArns:
+    - arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader
+
+# Option 2: every namespace may assume this role
+# crossAccountPolicy:
+#   namespaces: ["*"]
+#   roleArns:
+#     - arn:aws:iam::634107240400:role/temp-test-s3-bucket-list-reader
+
+# Option 3: every namespace may assume any role in any account (broad; the target trust policies still decide)
+# crossAccountPolicy:
+#   namespaces: ["*"]
+#   roleArns:
+#     - "arn:aws:iam::*:role/*"

@@ -20,7 +20,8 @@ spec:
   allowPrivilegeEscalationActions: {{ .Values.policy.allowPrivilegeEscalationActions }}
 {{- end }}
 {{- if .Values.crossAccountPolicy.roleArns }}
-{{- if not .Values.crossAccountPolicy.namespaces }}{{ fail "crossAccountPolicy.namespaces must list the namespaces allowed to assume these roles" }}{{- end }}
+{{- if not .Values.crossAccountPolicy.namespaces }}{{ fail "crossAccountPolicy: list namespaces, or use [\"*\"] for every namespace" }}{{- end }}
+{{- if and (has "*" .Values.crossAccountPolicy.namespaces) (gt (len .Values.crossAccountPolicy.namespaces) 1) }}{{ fail "crossAccountPolicy: \"*\" must be the only entry in namespaces" }}{{- end }}
 ---
 apiVersion: identity.platform.io/v1alpha1
 kind: IdentityPolicy
@@ -29,7 +30,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{ include "pio.labels" . | nindent 4 }}
 spec:
-  namespaces: {{ .Values.crossAccountPolicy.namespaces | toJson }}
+  namespaces: {{ if has "*" .Values.crossAccountPolicy.namespaces }}[]{{ else }}{{ .Values.crossAccountPolicy.namespaces | toJson }}{{ end }}
   allowedServices: [sts]
   allowedActions: [sts:AssumeRole, sts:TagSession]
   allowedResourceArnPatterns: {{ .Values.crossAccountPolicy.roleArns | toJson }}

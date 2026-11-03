@@ -32,6 +32,7 @@ export default withMermaid(defineConfig({
           { text: 'Installing with Helm', link: '/guide/installation' },
           { text: 'Configuration', link: '/guide/configuration' },
           { text: 'IRSA', link: '/guide/irsa' },
+          { text: 'Examples', link: '/guide/examples' },
           { text: 'ServiceAccount annotations', link: '/guide/annotations' },
           { text: 'Security model', link: '/guide/security' },
           { text: 'Image and sizing', link: '/guide/sizing' },

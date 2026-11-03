@@ -32,7 +32,7 @@ The chart is `charts/eks-devops-operator`. Defaults are in its `values.yaml`.
 | `policy.allowWildcardResources` | `false` | |
 | `policy.allowPrivilegeEscalationActions` | `false` | |
 | `permissionsBoundary` | `/eks-devops-operator/standard-workload` | Boundary policy path and name, attached to every role the operator creates. Empty = no boundary (not recommended). |
-| `crossAccountPolicy.namespaces` | `[]` | Namespaces allowed to assume the roles in `roleArns`. Required when `roleArns` is set. |
+| `crossAccountPolicy.namespaces` | `[]` | Namespaces allowed to assume the roles in `roleArns`. Required when `roleArns` is set. `["*"]` means every namespace (it must be the only entry). |
 | `crossAccountPolicy.roleArns` | `[]` | Role ARN patterns in other accounts that those namespaces may assume (`*` matches any part, for example `arn:aws:iam::*:role/*` for any account). Renders the `cross-account` IdentityPolicy when not empty. See [cross-account role assumption](/reference/identitypolicy#cross-account-role-assumption). |
 | `driftInterval` | `00:10:00` | Re-check interval for Ready resources |
 | `maxConcurrentReconciles` | `4` | |

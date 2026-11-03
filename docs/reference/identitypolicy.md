@@ -188,7 +188,7 @@ crossAccountPolicy:
 ```
 
 This renders an `IdentityPolicy` named `cross-account`, which allows only `sts:AssumeRole` and `sts:TagSession` on those ARNs, for those
-namespaces. Namespaces are required when `roleArns` is set, so the grant cannot apply to every namespace.
+namespaces. Namespaces are required when `roleArns` is set. Use `["*"]` to allow every namespace.
 
 The team's `PodIdentityAccess` then asks for the assume-role permission, and the operator creates the role and association:
 

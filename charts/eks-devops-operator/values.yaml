@@ -60,10 +60,10 @@ policy:
   allowPrivilegeEscalationActions: false
 
 # -- Optional cross-account grant: lets the listed namespaces request sts:AssumeRole and sts:TagSession on these role ARN patterns in other (* matches any part, e.g. arn:aws:iam::*:role/* for any account)
-# accounts. Rendered as an IdentityPolicy named "cross-account" only when roleArns is not empty. Namespaces are required with it, so the
-# grant can never apply cluster-wide. The target role's trust policy must trust the operator-created role.
+# accounts. Rendered as an IdentityPolicy named "cross-account" only when roleArns is not empty. Namespaces are required with it;
+# use ["*"] to allow every namespace. The target role's trust policy must trust the operator-created role.
 crossAccountPolicy:
-  namespaces: []
+  namespaces: []         # namespaces allowed to assume these roles; ["*"] = every namespace (must be the only entry)
   roleArns: []
 
 # -- Permissions boundary (path + name) attached to EVERY role the operator creates, and to existing roles at their next reconcile.
