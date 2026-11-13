@@ -9,7 +9,7 @@
 
 # The build stage always runs on the build machine's own architecture and cross-publishes for the target,
 # so multi-arch builds (including arm64 / Graviton) need no emulation.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 ARG TARGETARCH
 WORKDIR /src
 
